@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { Cookie, ShieldCheck } from "lucide-react";
 
-const STORAGE_KEY = "cookie-consent-v2";
+const STORAGE_KEY = "cookie-consent-v3";
+
+export type CookieConsentChoice = "accepted" | "rejected";
 
 export function CookieConsent() {
   const [visible, setVisible] = useState(false);
@@ -16,11 +18,11 @@ export function CookieConsent() {
     }
   }, []);
 
-  const dismiss = () => {
+  const saveChoice = (choice: CookieConsentChoice) => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, "acknowledged");
+      window.localStorage.setItem(STORAGE_KEY, choice);
     } catch {
-      // Wenn der Browser lokale Speicherung blockiert, gilt die Auswahl nur für diese Sitzung.
+      // Wenn lokale Speicherung blockiert ist, gilt die Auswahl nur für diese Sitzung.
     }
     setVisible(false);
   };
@@ -44,16 +46,39 @@ export function CookieConsent() {
             <h2 className="font-semibold text-[var(--text)]">Cookies &amp; Datenschutz</h2>
           </div>
           <p id="cookie-consent-description" className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            Diese Website verwendet keine eigenen Werbe- oder Tracking Cookies. Technisch notwendige
+            Diese Website verwendet keine eigenen Werbe- oder Tracking-Cookies. Technisch notwendige
             Cookies können durch Hosting- und Sicherheitsdienste wie Cloudflare gesetzt werden.
-            Optionale Analyse- oder Marketing Cookies werden derzeit nicht eingesetzt.
+            Optionale Analyse- oder Marketing-Technologien werden erst nach deiner ausdrücklichen
+            Zustimmung eingesetzt.
           </p>
           <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
-            Mehr Informationen findest du in der <a href="/datenschutz" className="text-[var(--accent)] hover:underline">Datenschutzerklärung</a>.
+            Du kannst optionale Technologien ablehnen. Deine Auswahl kannst du später über die
+            Cookie-Einstellungen erneut ändern. Mehr Informationen findest du in der{" "}
+            <a href="/datenschutz" className="text-[var(--accent)] hover:underline">
+              Datenschutzerklärung
+            </a>.
           </p>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <a href="/datenschutz" className="inline-flex min-h-10 items-center justify-center rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--text)] transition hover:border-[var(--accent)]">Datenschutz</a>
-            <button type="button" onClick={dismiss} className="inline-flex min-h-10 items-center justify-center rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-medium text-black transition hover:brightness-110">Verstanden</button>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => saveChoice("rejected")}
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--text)] transition hover:border-[var(--accent)]"
+            >
+              Nur notwendige
+            </button>
+            <a
+              href="/datenschutz"
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--text)] transition hover:border-[var(--accent)]"
+            >
+              Datenschutz
+            </a>
+            <button
+              type="button"
+              onClick={() => saveChoice("accepted")}
+              className="inline-flex min-h-10 items-center justify-center rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-medium text-black transition hover:brightness-110"
+            >
+              Alle akzeptieren
+            </button>
           </div>
         </div>
       </div>
