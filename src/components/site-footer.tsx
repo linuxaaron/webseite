@@ -3,6 +3,8 @@
 import { ArrowRight, Github, Instagram, Mail } from "lucide-react";
 import { FormEvent, useState } from "react";
 
+const COOKIE_STORAGE_KEY = "cookie-consent-v3";
+
 export function SiteFooter() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -23,7 +25,10 @@ export function SiteFooter() {
     finally { setBusy(false); }
   }
 
-  function openPrivacyNotice() { try { window.localStorage.removeItem("cookie-consent-v2"); } catch {} window.location.reload(); }
+  function openPrivacyNotice() {
+    try { window.localStorage.removeItem(COOKIE_STORAGE_KEY); } catch {}
+    window.location.reload();
+  }
 
   return (
     <footer className="relative overflow-hidden border-t border-[var(--border)]">
@@ -51,7 +56,7 @@ export function SiteFooter() {
         <div className="grid gap-10 border-y border-[var(--border)] py-10 md:grid-cols-[1.1fr_.9fr_.9fr_.9fr]">
           <div><p className="font-semibold">Linux Aaron</p><p className="mt-3 max-w-xs text-sm leading-6 text-[var(--muted)]">IT, Linux, Cybersecurity, OSINT und Webentwicklung.</p></div>
           <div><p className="font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]">NAVIGATION</p><div className="mt-4 grid gap-2 text-sm"><a href="/projekte">Projekte</a><a href="/webentwicklung">Webentwicklung</a><a href="/blog">Blog</a><a href="/news">Cyber News</a><a href="/kontakt">Kontakt</a></div></div>
-          <div><p className="font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]">RECHTLICHES</p><div className="mt-4 grid gap-2 text-sm"><a href="/impressum">Impressum</a><a href="/datenschutz">Datenschutz</a><button type="button" onClick={openPrivacyNotice} className="w-fit text-left">Cookie Einstellungen</button></div></div>
+          <div><p className="font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]">RECHTLICHES</p><div className="mt-4 grid gap-2 text-sm"><a href="/impressum">Impressum</a><a href="/datenschutz">Datenschutz</a><a href="/barrierefreiheit">Barrierefreiheit</a><button type="button" onClick={openPrivacyNotice} className="w-fit text-left">Cookie Einstellungen</button></div></div>
           <div><p className="font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]">CONNECT</p><div className="mt-4 flex gap-3"><a aria-label="GitHub" href="https://github.com/linuxaaron" target="_blank" rel="noopener noreferrer" className="rounded-full border border-[var(--border)] p-2 transition hover:border-[var(--accent)]"><Github size={17}/></a><a aria-label="Instagram" href="https://instagram.com/linuxaaron" target="_blank" rel="noopener noreferrer" className="rounded-full border border-[var(--border)] p-2 transition hover:border-[var(--accent)]"><Instagram size={17}/></a></div></div>
         </div>
 
