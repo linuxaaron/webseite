@@ -3,6 +3,8 @@
 import { ArrowRight, Github, Instagram, Mail } from "lucide-react";
 import { FormEvent, useState } from "react";
 
+const COOKIE_STORAGE_KEY = "cookie-consent-v3";
+
 export function SiteFooter() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -23,7 +25,10 @@ export function SiteFooter() {
     finally { setBusy(false); }
   }
 
-  function openPrivacyNotice() { try { window.localStorage.removeItem("cookie-consent-v2"); } catch {} window.location.reload(); }
+  function openPrivacyNotice() {
+    try { window.localStorage.removeItem(COOKIE_STORAGE_KEY); } catch {}
+    window.location.reload();
+  }
 
   return (
     <footer className="relative overflow-hidden border-t border-[var(--border)]">
