@@ -8,19 +8,20 @@ const MOBILE_CAT_WIDTH = 68;
 const MOBILE_CAT_HEIGHT = 62;
 const EDGE_PADDING = 18;
 const MOBILE_EDGE_PADDING = 8;
-const CAT_CURSOR_GAP = 92;
-const FOLLOW_SPEED = 0.17;
+const FOLLOW_DISTANCE = 112;
+const FOLLOW_LERP = 0.055;
+const MAX_FOLLOW_STEP = 2.8;
 
 const POSES = ["sit", "play", "stretch", "groom", "wink", "look"] as const;
 type CatPose = (typeof POSES)[number];
 
 const POSE_DURATIONS: Record<CatPose, number> = {
-  sit: 1100,
-  play: 1100,
-  stretch: 900,
-  groom: 1000,
-  wink: 850,
-  look: 900,
+  sit: 1500,
+  play: 1300,
+  stretch: 1200,
+  groom: 1350,
+  wink: 1050,
+  look: 1200,
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -31,14 +32,22 @@ export function CuteFooterCat() {
   const catRef = useRef<HTMLDivElement>(null);
   const targetRef = useRef({ x: 0, y: 0 });
   const positionRef = useRef({ x: 0, y: 0 });
+  const pointerRef = useRef({ x: 0, y: 0, inside: false });
   const frameRef = useRef<number | null>(null);
-  const poseTimerRef = useRef<number | null>(null);
   const activeRef = useRef(false);
   const touchDeviceRef = useRef(false);
   const visibleRef = useRef(false);
   const reducedMotionRef = useRef(false);
   const [visible, setVisible] = useState(false);
   const [pose, setPose] = useState<CatPose>("sit");
+
+  useEffect(() => {
+    if (reducedMotionRef.current) return;
+    const currentIndex = POSES.indexOf(pose);
+    const nextPose = POSES[(currentIndex + 1) % POSES.length];
+    const timer = window.setTimeout(() => setPose(nextPose), POSE_DURATIONS[pose]);
+    return () => window.clearTimeout(timer);
+  }, [pose]);
 
   useEffect(() => {
     const footer = document.querySelector("footer");
@@ -69,29 +78,42 @@ export function CuteFooterCat() {
       };
     };
 
-    const isInsideFooter = (x: number, y: number) => {
-      const rect = footer.getBoundingClientRect();
-      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-    };
-
     const setPosition = (x: number, y: number) => {
       positionRef.current = { x, y };
       cat.style.left = `${x}px`;
       cat.style.top = `${y}px`;
     };
 
-    const scheduleNextPose = () => {
-      if (poseTimerRef.current !== null) window.clearTimeout(poseTimerRef.current);
-      if (reducedMotionRef.current) return;
+    const getFooterBounds = () => {
+      const rect = footer.getBoundingClientRect();
+      return {
+        minX: Math.max(EDGE_PADDING, rect.left + EDGE_PADDING),
+        maxX: Math.min(window.innerWidth - CAT_WIDTH - EDGE_PADDING, rect.right - CAT_WIDTH - EDGE_PADDING),
+        minY: Math.max(EDGE_PADDING, rect.top + EDGE_PADDING),
+        maxY: Math.min(window.innerHeight - CAT_HEIGHT - EDGE_PADDING, rect.bottom - CAT_HEIGHT - EDGE_PADDING),
+      };
+    };
 
-      const currentIndex = POSES.indexOf(pose);
-      const nextPose = POSES[(currentIndex + 1) % POSES.length];
-      poseTimerRef.current = window.setTimeout(() => {
-        if (visibleRef.current && document.visibilityState !== "hidden") {
-          setPose(nextPose);
-        }
-        scheduleNextPose();
-      }, POSE_DURATIONS[pose]);
+    const updateFollowTarget = () => {
+      const pointer = pointerRef.current;
+      if (!pointer.inside || touchDeviceRef.current) return;
+
+      const current = positionRef.current;
+      const dx = current.x + CAT_WIDTH / 2 - pointer.x;
+      const dy = current.y + CAT_HEIGHT / 2 - pointer.y;
+      const distance = Math.hypot(dx, dy) || 1;
+      const bounds = getFooterBounds();
+
+      // The target stays behind the cursor instead of sitting on top of it.
+      const targetX = pointer.x + (dx / distance) * FOLLOW_DISTANCE - CAT_WIDTH / 2;
+      const targetY = pointer.y + (dy / distance) * FOLLOW_DISTANCE - CAT_HEIGHT / 2;
+
+      targetRef.current = {
+        x: clamp(targetX, bounds.minX, bounds.maxX),
+        y: clamp(targetY, bounds.minY, bounds.maxY),
+      };
+      activeRef.current = true;
+      setCatVisible(true);
     };
 
     const animate = () => {
@@ -101,10 +123,12 @@ export function CuteFooterCat() {
       const dy = target.y - current.y;
       const distance = Math.hypot(dx, dy);
 
-      if (activeRef.current && !touchDeviceRef.current) {
-        setPosition(current.x + dx * FOLLOW_SPEED, current.y + dy * FOLLOW_SPEED);
+      if (activeRef.current && !touchDeviceRef.current && !reducedMotionRef.current) {
+        const stepX = clamp(dx * FOLLOW_LERP, -MAX_FOLLOW_STEP, MAX_FOLLOW_STEP);
+        const stepY = clamp(dy * FOLLOW_LERP, -MAX_FOLLOW_STEP, MAX_FOLLOW_STEP);
+        setPosition(current.x + stepX, current.y + stepY);
         cat.style.setProperty("--walk-direction", dx < -1 ? "-1" : "1");
-        cat.classList.toggle("cute-cat-walk", distance > 3);
+        cat.classList.toggle("cute-cat-walk", distance > 7);
       } else {
         cat.classList.remove("cute-cat-walk");
       }
@@ -113,34 +137,24 @@ export function CuteFooterCat() {
     };
 
     const moveToCursor = (event: PointerEvent) => {
-      if (touchDeviceRef.current || !isInsideFooter(event.clientX, event.clientY)) return;
-      const rect = footer.getBoundingClientRect();
-      const maxLeft = Math.min(window.innerWidth - CAT_WIDTH - EDGE_PADDING, rect.right - CAT_WIDTH - EDGE_PADDING);
-      const minLeft = Math.max(EDGE_PADDING, rect.left + EDGE_PADDING);
-      const maxTop = Math.min(window.innerHeight - CAT_HEIGHT - EDGE_PADDING, rect.bottom - CAT_HEIGHT - EDGE_PADDING);
-      const minTop = Math.max(EDGE_PADDING, rect.top + EDGE_PADDING);
-
-      targetRef.current = {
-        x: clamp(event.clientX + CAT_CURSOR_GAP - CAT_WIDTH / 2, minLeft, maxLeft),
-        y: clamp(event.clientY - CAT_HEIGHT / 2, minTop, maxTop),
-      };
-      activeRef.current = true;
-      setCatVisible(true);
+      if (touchDeviceRef.current) return;
+      pointerRef.current = { x: event.clientX, y: event.clientY, inside: true };
+      updateFollowTarget();
     };
 
     const enterFooter = (event: PointerEvent) => {
-      if (touchDeviceRef.current || !isInsideFooter(event.clientX, event.clientY)) return;
-      const resting = getRestingPosition();
-      setPosition(resting.x, resting.y);
-      targetRef.current = resting;
-      activeRef.current = true;
-      setCatVisible(true);
+      if (touchDeviceRef.current) return;
+      pointerRef.current = { x: event.clientX, y: event.clientY, inside: true };
+      // Do not teleport the cat when the cursor enters the footer.
+      // It keeps its current position and begins following smoothly.
+      if (!activeRef.current) {
+        updateFollowTarget();
+      }
     };
 
-    const leaveFooter = (event: PointerEvent) => {
+    const leaveFooter = () => {
       if (touchDeviceRef.current) return;
-      const nextTarget = event.relatedTarget;
-      if (nextTarget instanceof Node && footer.contains(nextTarget)) return;
+      pointerRef.current.inside = false;
       activeRef.current = false;
       targetRef.current = getRestingPosition();
     };
@@ -160,7 +174,11 @@ export function CuteFooterCat() {
     };
 
     const handleResize = () => {
-      if (touchDeviceRef.current) updateMobileCat();
+      if (touchDeviceRef.current) {
+        updateMobileCat();
+        return;
+      }
+      if (pointerRef.current.inside) updateFollowTarget();
       else if (!activeRef.current) setPosition(getRestingPosition().x, getRestingPosition().y);
     };
 
@@ -172,10 +190,9 @@ export function CuteFooterCat() {
     const handleReducedMotion = (event: MediaQueryListEvent) => {
       reducedMotionRef.current = event.matches;
       if (event.matches) {
-        if (poseTimerRef.current !== null) window.clearTimeout(poseTimerRef.current);
+        activeRef.current = false;
         setPose("sit");
-      } else {
-        scheduleNextPose();
+        setPosition(getRestingPosition().x, getRestingPosition().y);
       }
     };
 
@@ -192,7 +209,6 @@ export function CuteFooterCat() {
     targetRef.current = initial;
     if (touchDeviceRef.current) updateMobileCat();
     frameRef.current = window.requestAnimationFrame(animate);
-    scheduleNextPose();
 
     return () => {
       observer.disconnect();
@@ -203,9 +219,8 @@ export function CuteFooterCat() {
       window.removeEventListener("scroll", updateMobileCat);
       reducedMotion.removeEventListener("change", handleReducedMotion);
       if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
-      if (poseTimerRef.current !== null) window.clearTimeout(poseTimerRef.current);
     };
-  }, [pose]);
+  }, []);
 
   return (
     <div
@@ -241,21 +256,21 @@ export function CuteFooterCat() {
             </g>
 
             <g className="cute-cat-head">
-              <path d="M22 34 L24 13 L36 23 C40 21 44 21 48 23 L60 13 L61 35 C61 48 53 54 42 54 C30 54 22 47 22 34Z" fill="url(#cat-fur)" />
+              <path d="M22 34 L24 13 L36 23 C40 20 44 20 48 23 L60 13 L61 35 C61 48 53 54 42 54 C30 54 22 47 22 34Z" fill="url(#cat-fur)" />
               <path d="M26 25 L26 18 L34 24 C31 24 29 24 26 25Z" fill="#f3a7b8" />
               <path d="M57 25 L58 18 L50 24 C53 24 55 24 57 25Z" fill="#f3a7b8" />
 
               <g className="cute-cat-eyes">
-                <ellipse className="cute-cat-eye cute-cat-eye-left" cx="33.5" cy="34" rx="6" ry="7.5" fill="#5bb7ff" />
-                <ellipse className="cute-cat-eye cute-cat-eye-right" cx="50.5" cy="34" rx="6" ry="7.5" fill="#5bb7ff" />
-                <ellipse cx="34" cy="35" rx="2.1" ry="4.3" fill="#13243a" />
-                <ellipse cx="50" cy="35" rx="2.1" ry="4.3" fill="#13243a" />
-                <circle cx="32" cy="31.5" r="1.6" fill="#fff" />
-                <circle cx="48" cy="31.5" r="1.6" fill="#fff" />
+                <ellipse className="cute-cat-eye cute-cat-eye-left" cx="33" cy="34" rx="7" ry="8.5" fill="#6cc5ff" />
+                <ellipse className="cute-cat-eye cute-cat-eye-right" cx="51" cy="34" rx="7" ry="8.5" fill="#6cc5ff" />
+                <ellipse cx="33" cy="35" rx="2.5" ry="4.8" fill="#152338" />
+                <ellipse cx="51" cy="35" rx="2.5" ry="4.8" fill="#152338" />
+                <circle cx="31" cy="31" r="1.9" fill="#fff" />
+                <circle cx="49" cy="31" r="1.9" fill="#fff" />
               </g>
 
-              <path className="cute-cat-wink" d="M47 34 C49 32 52 32 54 34" fill="none" stroke="#243247" strokeWidth="1.7" strokeLinecap="round" />
-              <path d="M39 40 Q42 43 45 40" fill="none" stroke="#596579" strokeWidth="1.2" strokeLinecap="round" />
+              <path className="cute-cat-wink" d="M47 35 Q51 31 55 35" fill="none" stroke="#243247" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M38.5 40 Q42 43 45.5 40" fill="none" stroke="#596579" strokeWidth="1.2" strokeLinecap="round" />
               <path d="M40.5 39.5 Q42 38 43.5 39.5 Q42 42 40.5 39.5Z" fill="#e98ea3" />
               <path d="M28 39 L18 37 M28 42 L17 43 M56 39 L66 37 M56 42 L67 43" stroke="#b7c0ca" strokeWidth="1" strokeLinecap="round" />
             </g>
@@ -290,49 +305,51 @@ export function CuteFooterCat() {
         }
         .cute-footer-cat.is-visible { opacity: 1; transform: translate3d(0,0,0) scale(1); }
         .cute-cat-art { transform-origin: 42px 58px; }
-        .cute-cat-body { transform-origin: 42px 58px; animation: cat-breathe 1s ease-in-out infinite; }
-        .cute-cat-tail { transform-box: fill-box; transform-origin: 18% 72%; animation: cat-tail 1.05s ease-in-out infinite; }
+        .cute-cat-body { transform-origin: 42px 58px; animation: cat-breathe 1.35s ease-in-out infinite; }
+        .cute-cat-tail { transform-box: fill-box; transform-origin: 18% 72%; animation: cat-tail 1.45s ease-in-out infinite; }
         .cute-cat-paw { transform-box: fill-box; transform-origin: center top; }
-        .cute-cat-eye { transform-box: fill-box; transform-origin: center; animation: cat-blink 3.1s ease-in-out infinite; }
-        .cute-cat-eye-right { animation-delay: 1.15s; }
+        .cute-cat-eye { transform-box: fill-box; transform-origin: center; animation: cat-blink 3.4s ease-in-out infinite; }
+        .cute-cat-eye-right { animation-delay: 1.2s; }
         .cute-cat-wink { opacity: 0; }
-        .cute-cat-yarn { transform-origin: 16px 61px; animation: cat-yarn 1.1s ease-in-out infinite; }
-        .cute-cat-pose-play .cute-cat-body { animation: cat-play 1.1s ease-in-out both; }
-        .cute-cat-pose-play .cute-cat-paw-left { animation: cat-paw-play .55s ease-in-out infinite alternate; }
-        .cute-cat-pose-stretch .cute-cat-body { animation: cat-stretch .9s ease-in-out both; }
-        .cute-cat-pose-stretch .cute-cat-paw-left { animation: cat-stretch-paw .9s ease-in-out both; }
-        .cute-cat-pose-groom .cute-cat-body { animation: cat-groom 1s ease-in-out both; }
-        .cute-cat-pose-groom .cute-cat-paw-left { animation: cat-groom-paw 1s ease-in-out both; }
-        .cute-cat-pose-wink .cute-cat-eye-right { animation: none; transform: scaleY(.08); }
-        .cute-cat-pose-wink .cute-cat-wink { opacity: 1; animation: cat-wink .85s ease-in-out both; }
-        .cute-cat-pose-look .cute-cat-head { animation: cat-look .9s ease-in-out both; }
-        .cute-cat-walk .cute-cat-body { animation: cat-walk .28s ease-in-out infinite alternate; }
-        .cute-cat-walk .cute-cat-paw-left { animation: cat-step-left .28s ease-in-out infinite alternate; }
-        .cute-cat-walk .cute-cat-paw-right { animation: cat-step-right .28s ease-in-out infinite alternate; }
+        .cute-cat-yarn { transform-origin: 16px 61px; animation: cat-yarn 1.45s ease-in-out infinite; }
+        .cute-cat-pose-play .cute-cat-body { animation: cat-play 1.3s ease-in-out both; }
+        .cute-cat-pose-play .cute-cat-paw-left { animation: cat-paw-play .65s ease-in-out infinite alternate; }
+        .cute-cat-pose-stretch .cute-cat-body { animation: cat-stretch 1.2s ease-in-out both; }
+        .cute-cat-pose-stretch .cute-cat-paw-left { animation: cat-stretch-paw 1.2s ease-in-out both; }
+        .cute-cat-pose-groom .cute-cat-body { animation: cat-groom 1.35s ease-in-out both; }
+        .cute-cat-pose-groom .cute-cat-paw-right { animation: cat-groom-paw .65s ease-in-out infinite alternate; }
+        .cute-cat-pose-wink .cute-cat-eyes { animation: cat-wink 1.05s ease-in-out both; }
+        .cute-cat-pose-wink .cute-cat-wink { opacity: 1; animation: cat-wink-line 1.05s ease-in-out both; }
+        .cute-cat-pose-look .cute-cat-head { animation: cat-look 1.2s ease-in-out both; }
+        .cute-cat-walk .cute-cat-paw-left { animation: cat-step .35s ease-in-out infinite alternate; }
+        .cute-cat-walk .cute-cat-paw-right { animation: cat-step .35s ease-in-out .175s infinite alternate; }
+        .cute-cat-walk .cute-cat-body { animation: cat-walk-body .7s ease-in-out infinite; }
+        .cute-cat-walk .cute-cat-tail { animation-duration: .7s; }
 
-        @keyframes cat-breathe { 0%,100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(-1.5px) scaleY(1.02); } }
-        @keyframes cat-tail { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(18deg); } }
-        @keyframes cat-blink { 0%,82%,100% { transform: scaleY(1); } 87% { transform: scaleY(.08); } 91% { transform: scaleY(1); } }
-        @keyframes cat-yarn { 0%,100% { transform: rotate(-3deg) translateY(0); } 50% { transform: rotate(6deg) translateY(-2px); } }
-        @keyframes cat-play { 0%,100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-2px) rotate(-3deg); } 55% { transform: translateY(-5px) rotate(4deg); } 80% { transform: translateY(-1px) rotate(-2deg); } }
-        @keyframes cat-paw-play { from { transform: rotate(-8deg) translateY(0); } to { transform: rotate(14deg) translateY(-5px); } }
-        @keyframes cat-stretch { 0% { transform: translateY(0) scaleY(1); } 45% { transform: translateY(3px) scaleY(.92); } 70% { transform: translateY(-3px) scaleY(1.08) rotate(-3deg); } 100% { transform: translateY(0) scaleY(1); } }
-        @keyframes cat-stretch-paw { 0%,100% { transform: translateY(0) rotate(0); } 55% { transform: translateY(7px) rotate(-10deg); } }
-        @keyframes cat-groom { 0%,100% { transform: rotate(0); } 35% { transform: rotate(-7deg) translateY(-1px); } 65% { transform: rotate(5deg) translateY(-2px); } }
-        @keyframes cat-groom-paw { 0%,100% { transform: translate(0,0) rotate(0); } 45% { transform: translate(-3px,-7px) rotate(-18deg); } 70% { transform: translate(-2px,-5px) rotate(12deg); } }
-        @keyframes cat-wink { 0%,65%,100% { opacity: 0; } 72%,90% { opacity: 1; } }
-        @keyframes cat-look { 0%,100% { transform: translateX(0) rotate(0); } 35% { transform: translateX(2px) rotate(4deg); } 65% { transform: translateX(-2px) rotate(-4deg); } }
-        @keyframes cat-walk { from { transform: translateY(0) rotate(-1deg); } to { transform: translateY(-2.5px) rotate(1deg); } }
-        @keyframes cat-step-left { from { transform: translateY(0) rotate(5deg); } to { transform: translateY(-4px) rotate(-8deg); } }
-        @keyframes cat-step-right { from { transform: translateY(-4px) rotate(-8deg); } to { transform: translateY(0) rotate(5deg); } }
+        @keyframes cat-breathe { 0%,100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(-1px) scaleY(1.015); } }
+        @keyframes cat-tail { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(8deg); } }
+        @keyframes cat-yarn { 0%,100% { transform: rotate(-4deg) translateY(0); } 50% { transform: rotate(7deg) translateY(-1px); } }
+        @keyframes cat-blink { 0%,91%,100% { transform: scaleY(1); } 94%,97% { transform: scaleY(.08); } }
+        @keyframes cat-wink { 0%,100% { transform: scaleY(1); } 35%,65% { transform: scaleY(.12); } }
+        @keyframes cat-wink-line { 0%,100% { opacity: 0; } 25%,75% { opacity: 1; } }
+        @keyframes cat-play { 0%,100% { transform: translateY(0) rotate(0); } 45% { transform: translateY(-3px) rotate(-2deg); } 70% { transform: translateY(1px) rotate(2deg); } }
+        @keyframes cat-paw-play { from { transform: rotate(-9deg) translateY(0); } to { transform: rotate(8deg) translateY(-2px); } }
+        @keyframes cat-stretch { 0% { transform: translateY(0) scaleY(1); } 55% { transform: translateY(4px) scaleY(.93); } 100% { transform: translateY(0) scaleY(1); } }
+        @keyframes cat-stretch-paw { 0%,100% { transform: translateY(0) rotate(0); } 55% { transform: translateY(5px) rotate(-8deg); } }
+        @keyframes cat-groom { 0%,100% { transform: translateX(0) rotate(0); } 50% { transform: translateX(2px) rotate(2deg); } }
+        @keyframes cat-groom-paw { from { transform: rotate(-12deg); } to { transform: rotate(12deg); } }
+        @keyframes cat-look { 0%,100% { transform: rotate(0); } 50% { transform: rotate(5deg); } }
+        @keyframes cat-step { from { transform: translateY(0) rotate(-6deg); } to { transform: translateY(-2px) rotate(7deg); } }
+        @keyframes cat-walk-body { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
 
-        @media (hover: none), (pointer: coarse) {
-          .cute-footer-cat { width: ${MOBILE_CAT_WIDTH}px; height: ${MOBILE_CAT_HEIGHT}px; transform: translate3d(0,0,0) scale(.82); }
-          .cute-footer-cat.is-visible { transform: translate3d(0,0,0) scale(.82); }
+        @media (max-width: 640px) {
+          .cute-footer-cat { width: ${MOBILE_CAT_WIDTH}px; height: ${MOBILE_CAT_HEIGHT}px; }
+          .cute-footer-cat svg { width: ${MOBILE_CAT_WIDTH}px; height: ${MOBILE_CAT_HEIGHT}px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .cute-footer-cat *, .cute-footer-cat { animation: none !important; transition: none !important; }
+          .cute-footer-cat,
+          .cute-footer-cat * { animation: none !important; transition: none !important; }
         }
       `}</style>
     </div>
