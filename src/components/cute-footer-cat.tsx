@@ -60,7 +60,6 @@ export function CuteFooterCat() {
       const dy = catCenterY - pointerY;
       const distance = Math.hypot(dx, dy);
 
-      // If the pointer is already within the safety radius, don't pull the cat toward it.
       if (distance <= FOLLOW_DISTANCE) {
         targetRef.current = { ...positionRef.current, active: true };
         return;
@@ -93,9 +92,8 @@ export function CuteFooterCat() {
       const target = targetRef.current;
       const current = positionRef.current;
       const velocity = velocityRef.current;
-      const bounds = clampTarget(0, 0, rect.width, rect.height, catWidth, catHeight);
-      const maxX = Math.max(bounds.x, rect.width - catWidth - EDGE_GAP);
-      const maxY = Math.max(bounds.y, rect.height - catHeight - EDGE_GAP);
+      const maxX = Math.max(EDGE_GAP, rect.width - catWidth - EDGE_GAP);
+      const maxY = Math.max(EDGE_GAP, rect.height - catHeight - EDGE_GAP);
       const spring = target.active ? 0.0011 : 0.0008;
       const damping = 0.90;
 
@@ -115,8 +113,7 @@ export function CuteFooterCat() {
     const initialRect = footer.getBoundingClientRect();
     const initialWidth = cat.offsetWidth;
     const initialHeight = cat.offsetHeight;
-    const initial = clampTarget(initialRect.width - initialWidth - EDGE_GAP, initialRect.height - initialHeight - EDGE_GAP, initialRect.width, initialRect.height, initialWidth, initialHeight);
-    positionRef.current = initial;
+    positionRef.current = clampTarget(initialRect.width - initialWidth - EDGE_GAP, initialRect.height - initialHeight - EDGE_GAP, initialRect.width, initialRect.height, initialWidth, initialHeight);
 
     window.addEventListener("pointermove", updatePointer, { passive: true });
     footer.addEventListener("pointerleave", resetPointer);
@@ -135,7 +132,7 @@ export function CuteFooterCat() {
     <div
       ref={catRef}
       aria-hidden="true"
-      className="pointer-events-none absolute bottom-0 right-0 z-10 select-none motion-reduce:hidden"
+      className="cute-footer-cat pointer-events-none absolute bottom-0 right-0 select-none motion-reduce:hidden"
       style={{ width: MAX_WIDTH, aspectRatio: `${ASPECT_RATIO}`, willChange: "transform" }}
     >
       <img
