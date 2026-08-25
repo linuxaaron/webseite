@@ -23,7 +23,7 @@ export function CuteFooterCat() {
     const size = () => {
       const width = window.innerWidth < 640 ? MOBILE_WIDTH : DESKTOP_WIDTH;
       cat.style.width = `${width}px`;
-      cat.style.height = `${(width * 255) / 405}px`;
+      cat.style.height = `${(width * 280) / 455}px`;
     };
 
     const bounds = () => {
@@ -123,21 +123,32 @@ export function CuteFooterCat() {
       className="cute-footer-cat pointer-events-none absolute left-0 top-0 z-[60] select-none"
       style={{
         width: DESKTOP_WIDTH,
-        aspectRatio: "405 / 255",
+        aspectRatio: "455 / 280",
         willChange: "transform",
-        WebkitMaskImage: `url(${CAT_ART})`,
-        maskImage: `url(${CAT_ART})`,
-        maskMode: "luminance",
-        WebkitMaskRepeat: "no-repeat",
-        maskRepeat: "no-repeat",
-        WebkitMaskSize: "100% 100%",
-        maskSize: "100% 100%",
       }}
     >
-      <img src={CAT_ART} alt="" width={455} height={280} draggable={false} className="block h-full w-full object-contain" />
+      <svg aria-hidden="true" className="absolute h-0 w-0" width="0" height="0" focusable="false">
+        <defs>
+          <filter id="cat-cutout" colorInterpolationFilters="sRGB">
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0.2126 0.7152 0.0722 0 0" />
+            <feComponentTransfer>
+              <feFuncA type="table" tableValues="0 0 0 0.15 0.55 0.85 1 1 1" />
+            </feComponentTransfer>
+          </filter>
+        </defs>
+      </svg>
+      <img
+        src={CAT_ART}
+        alt=""
+        width={455}
+        height={280}
+        draggable={false}
+        className="block h-full w-full object-contain"
+        style={{ filter: "url(#cat-cutout)" }}
+      />
       <span className="cat-blink" />
       <style jsx>{`
-        .cute-footer-cat { -webkit-mask-mode: luminance; }
+        .cute-footer-cat { isolation: isolate; }
         .cat-blink { position:absolute; left:28.8%; top:44.7%; width:6.2%; height:11.5%; border-radius:50%; background:#fff; opacity:0; animation:blink 5.5s ease-in-out infinite; }
         @keyframes blink { 0%,88%,100% { opacity:0; transform:scaleY(.15); } 90%,94% { opacity:1; transform:scaleY(1); } }
         @media (prefers-reduced-motion:reduce) { .cat-blink { animation:none; opacity:0; } }
