@@ -37,12 +37,20 @@ export function CuteFooterCat() {
       ? { width: MOBILE_CAT_WIDTH, height: MOBILE_CAT_HEIGHT }
       : { width: CAT_WIDTH, height: CAT_HEIGHT };
 
+    const clamp = (value: number, min: number, max: number) =>
+      Math.min(Math.max(value, min), Math.max(min, max));
+
     const getRestingPosition = () => {
       const rect = footer.getBoundingClientRect();
       const { width, height } = getSize();
+      const visibleFooterTop = Math.max(rect.top, EDGE_PADDING);
+      const visibleFooterBottom = Math.min(rect.bottom, window.innerHeight - EDGE_PADDING);
+      const maxViewportY = Math.max(EDGE_PADDING, window.innerHeight - height - EDGE_PADDING);
+      const preferredY = visibleFooterBottom - height - 8;
+
       return {
-        x: Math.max(EDGE_PADDING, rect.left + (rect.width - width) / 2),
-        y: Math.max(EDGE_PADDING, rect.bottom - height - 8),
+        x: clamp(rect.left + (rect.width - width) / 2, EDGE_PADDING, window.innerWidth - width - EDGE_PADDING),
+        y: clamp(preferredY, visibleFooterTop, maxViewportY),
       };
     };
 
@@ -74,13 +82,12 @@ export function CuteFooterCat() {
       const distance = Math.hypot(dx, dy) || 1;
       const bounds = getFooterBounds();
 
-      // The cat follows the cursor while keeping a clear, natural distance.
       const targetX = pointer.x + (dx / distance) * FOLLOW_DISTANCE - width / 2;
       const targetY = pointer.y + (dy / distance) * FOLLOW_DISTANCE - height / 2;
 
       targetRef.current = {
-        x: Math.min(Math.max(targetX, bounds.minX), bounds.maxX),
-        y: Math.min(Math.max(targetY, bounds.minY), bounds.maxY),
+        x: clamp(targetX, bounds.minX, bounds.maxX),
+        y: clamp(targetY, bounds.minY, bounds.maxY),
       };
       activeRef.current = true;
       setCatVisible(true);
@@ -140,7 +147,11 @@ export function CuteFooterCat() {
     const handleResize = () => {
       if (touchDeviceRef.current) updateMobile();
       else if (pointerRef.current.inside) updateFollowTarget();
-      else setPosition(getRestingPosition().x, getRestingPosition().y);
+      else {
+        const resting = getRestingPosition();
+        setPosition(resting.x, resting.y);
+        targetRef.current = resting;
+      }
     };
 
     const observer = new IntersectionObserver(([entry]) => {
@@ -151,7 +162,9 @@ export function CuteFooterCat() {
     const handleReducedMotion = (event: MediaQueryListEvent) => {
       reducedMotionRef.current = event.matches;
       activeRef.current = false;
-      setPosition(getRestingPosition().x, getRestingPosition().y);
+      const resting = getRestingPosition();
+      setPosition(resting.x, resting.y);
+      targetRef.current = resting;
       cat.classList.remove("is-walking");
     };
 
