@@ -1,19 +1,8 @@
-# Linux Aaron — Web & Cybersecurity
+# Joscha Aaron Schmidt — Personal Website
 
-> Technische Webentwicklung, Linux, OSINT und Cybersecurity.
+> Persönliche Website von Joscha Aaron Schmidt mit Fokus auf Full-Stack Development, Cybersecurity, OSINT, Linux und Web Security.
 
-## Webdesign-Portfolio
-
-**Websites für Unternehmen, Projekte und Selbstständige:**
-
-- Landingpages
-- komplette Websites mit Kategorien
-- responsives Webdesign
-- individuelle Webanwendungen
-- technische Dashboards und Interfaces
-- Performance- und Security-orientierte Umsetzung
-
-### Portfolio ansehen
+## Website
 
 **Live:** https://linuxaaron.github.io/webseite/
 
@@ -21,9 +10,22 @@
 
 **GitHub:** https://github.com/linuxaaron
 
-## Technischer Schwerpunkt
+## Inhalte
 
-`HTML` · `CSS` · `JavaScript` · `TypeScript` · `Next.js` · `Python` · `SQL` · `Linux` · `OSINT` · `Web Security` · `Git` · `Cloud`
+Die Website bündelt meine technischen Schwerpunkte und Projekte:
+
+- Full-Stack Development
+- Webentwicklung und responsive Websites
+- Web Security und technische Audits
+- OSINT und digitale Recherche
+- Linux und Systemanalyse
+- Cybersecurity
+- Security Blog
+- Vorträge und Schulungen
+
+## Webentwicklung & Portfolio
+
+Die Website enthält einen eigenen Bereich für Webentwicklung und Portfolio-Projekte. Dort werden Leistungen, technische Schwerpunkte und ausgewählte Webprojekte dargestellt.
 
 ## Projekte
 
@@ -31,9 +33,9 @@
 - https://github.com/linuxaaron/malware-analyzer
 - https://github.com/linuxaaron/security-dashboard
 
-## Portfolio-Code
+## Technischer Stack
 
-Die eigenständige Webdesign-/Portfolioseite liegt unter [`portfolio/`](portfolio/). Sie verwendet keine externen JavaScript-Libraries und kann als statische Website über GitHub Pages ausgeliefert werden.
+`HTML` · `CSS` · `JavaScript` · `TypeScript` · `Next.js` · `React` · `Python` · `SQL` · `Linux` · `OSINT` · `Web Security` · `Git` · `Cloud`
 
 ## Lizenz
 
