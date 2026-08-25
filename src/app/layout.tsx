@@ -6,7 +6,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { CookieConsent } from "@/components/cookie-consent";
 import { BitcoinTicker } from "@/components/bitcoin-ticker";
 import { CursorLiquid } from "@/components/cursor-liquid";
-import { CuteFooterCat } from "@/components/cute-footer-cat";
 
 const karla = Karla({ subsets: ["latin"], display: "swap", variable: "--font-karla", weight: ["400", "500", "600", "700"] });
 const plexMono = IBM_Plex_Mono({ subsets: ["latin"], display: "swap", variable: "--font-plex-mono", weight: ["400", "500", "600"] });
@@ -53,7 +52,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <BitcoinTicker />
         <div id="main-content">{children}</div>
         <SiteFooter />
-        <CuteFooterCat />
         <CookieConsent />
       </body>
     </html>
