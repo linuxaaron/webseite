@@ -24,7 +24,6 @@ export function CuteFooterCat() {
     if (!cat || !footer) return;
 
     let raf = 0;
-    let last = performance.now();
 
     const size = () => {
       const width = window.innerWidth < 640 ? MOBILE_WIDTH : DESKTOP_WIDTH;
@@ -87,11 +86,10 @@ export function CuteFooterCat() {
       }
 
       const idleBob = Math.sin(now / 560) * 1.2;
-      const walkBob = s.phase === "walk" ? Math.sin(now / 105) * 1.8 : 0;
+      const walkBob = s.phase === "walk" ? Math.abs(Math.sin(now / 105)) * 1.35 : 0;
       const direction = s.direction < 0 ? 1 : -1;
       cat.style.transform = `translate3d(${s.x}px, ${b.maxY + idleBob + walkBob}px, 0) scaleX(${direction})`;
 
-      last = now;
       raf = requestAnimationFrame(tick);
     };
 
@@ -173,13 +171,15 @@ export function CuteFooterCat() {
             <ellipse cx="277" cy="208" rx="79" ry="57" fill="url(#black-cat-fur)" stroke="#343a44" strokeWidth="3" />
             <ellipse cx="301" cy="190" rx="47" ry="30" fill="url(#black-cat-highlight)" opacity="0.42" />
 
-            <g className="cat-leg cat-leg-back">
-              <path d="M300 224 Q318 223 325 238 L324 262 Q314 271 300 263 Z" fill="#080b10" stroke="#343a44" strokeWidth="3" />
-              <ellipse cx="313" cy="265" rx="19" ry="7" fill="#080b10" />
-            </g>
-            <g className="cat-leg cat-leg-front">
-              <path d="M244 224 Q261 221 269 239 L268 263 Q257 272 243 263 Z" fill="#0a0d12" stroke="#343a44" strokeWidth="3" />
-              <ellipse cx="256" cy="266" rx="19" ry="7" fill="#0a0d12" />
+            <g className="cat-legs">
+              <g className="cat-leg cat-leg-back">
+                <path d="M300 220 Q318 219 325 238 L324 259 Q321 266 313 266 Q302 266 298 259 L298 238 Z" fill="#080b10" stroke="#343a44" strokeWidth="3" />
+                <ellipse className="cat-paw" cx="311" cy="264" rx="21" ry="7" fill="#080b10" stroke="#343a44" strokeWidth="2" />
+              </g>
+              <g className="cat-leg cat-leg-front">
+                <path d="M244 220 Q262 218 269 238 L268 259 Q265 266 257 266 Q246 266 242 259 L242 238 Z" fill="#0a0d12" stroke="#343a44" strokeWidth="3" />
+                <ellipse className="cat-paw" cx="255" cy="264" rx="21" ry="7" fill="#0a0d12" stroke="#343a44" strokeWidth="2" />
+              </g>
             </g>
           </g>
 
@@ -224,13 +224,22 @@ export function CuteFooterCat() {
 
       <style jsx>{`
         .cute-footer-cat[data-walking="true"] .cat-tail {
-          animation: tail-walk 0.8s ease-in-out infinite alternate;
+          animation: tail-walk 0.72s ease-in-out infinite alternate;
+        }
+        .cute-footer-cat[data-walking="true"] .cat-legs {
+          animation: leg-cycle 0.42s steps(2, end) infinite;
+          transform-origin: 255px 264px;
         }
         .cute-footer-cat[data-walking="true"] .cat-leg-front {
-          animation: leg-front 0.34s ease-in-out infinite alternate;
+          animation: front-leg 0.42s ease-in-out infinite;
+          transform-origin: 256px 229px;
         }
         .cute-footer-cat[data-walking="true"] .cat-leg-back {
-          animation: leg-back 0.34s ease-in-out 0.17s infinite alternate;
+          animation: back-leg 0.42s ease-in-out infinite;
+          transform-origin: 313px 229px;
+        }
+        .cute-footer-cat[data-walking="true"] .cat-paw {
+          animation: paw-contact 0.42s ease-in-out infinite;
         }
         .cat-tail {
           transform-origin: 332px 216px;
@@ -250,16 +259,24 @@ export function CuteFooterCat() {
           50% { transform: rotate(8deg); }
         }
         @keyframes tail-walk {
-          from { transform: rotate(-10deg); }
-          to { transform: rotate(13deg); }
+          from { transform: rotate(-12deg); }
+          to { transform: rotate(15deg); }
         }
-        @keyframes leg-front {
-          from { transform: translateY(0) rotate(-7deg); transform-origin: 256px 230px; }
-          to { transform: translateY(-2px) rotate(8deg); transform-origin: 256px 230px; }
+        @keyframes leg-cycle {
+          0%, 49.9% { transform: translateY(0); }
+          50%, 100% { transform: translateY(-1.5px); }
         }
-        @keyframes leg-back {
-          from { transform: translateY(-2px) rotate(8deg); transform-origin: 313px 230px; }
-          to { transform: translateY(0) rotate(-7deg); transform-origin: 313px 230px; }
+        @keyframes front-leg {
+          0%, 100% { transform: translateY(0) rotate(10deg); }
+          50% { transform: translateY(-4px) rotate(-12deg); }
+        }
+        @keyframes back-leg {
+          0%, 100% { transform: translateY(-4px) rotate(-12deg); }
+          50% { transform: translateY(0) rotate(10deg); }
+        }
+        @keyframes paw-contact {
+          0%, 100% { transform: scaleY(1) scaleX(1); }
+          50% { transform: scaleY(0.82) scaleX(1.08); }
         }
         @keyframes head-bob {
           0%, 100% { transform: translateY(0); }
@@ -272,8 +289,10 @@ export function CuteFooterCat() {
         }
         @media (prefers-reduced-motion: reduce) {
           .cute-footer-cat[data-walking="true"] .cat-tail,
+          .cute-footer-cat[data-walking="true"] .cat-legs,
           .cute-footer-cat[data-walking="true"] .cat-leg-front,
           .cute-footer-cat[data-walking="true"] .cat-leg-back,
+          .cute-footer-cat[data-walking="true"] .cat-paw,
           .cat-tail,
           .cat-eyes,
           .cat-head {
