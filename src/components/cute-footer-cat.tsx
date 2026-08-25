@@ -16,7 +16,6 @@ export function CuteFooterCat() {
     phase: "pause" as "walk" | "pause",
     direction: -1,
     phaseStarted: 0,
-    initialized: false,
   });
 
   useEffect(() => {
@@ -41,7 +40,6 @@ export function CuteFooterCat() {
       const center = Math.max(EDGE_GAP, Math.min(right, (rect.width - width) / 2));
 
       return {
-        minX: EDGE_GAP,
         centerX: center,
         maxX: right,
         maxY: Math.max(EDGE_GAP, rect.height - height - EDGE_GAP),
@@ -63,8 +61,6 @@ export function CuteFooterCat() {
     };
 
     const tick = (now: number) => {
-      const dt = Math.min(32, now - last);
-      last = now;
       const s = state.current;
       const b = bounds();
 
@@ -74,8 +70,7 @@ export function CuteFooterCat() {
           s.phaseStarted = now;
           setWalkingState(true, s.direction);
         } else {
-          const duration = WALK_DURATION;
-          const progress = Math.min(1, (now - s.phaseStarted) / duration);
+          const progress = Math.min(1, (now - s.phaseStarted) / WALK_DURATION);
           const from = s.direction < 0 ? b.maxX : b.centerX;
           const to = s.direction < 0 ? b.centerX : b.maxX;
           const eased = progress * progress * (3 - 2 * progress);
@@ -93,13 +88,10 @@ export function CuteFooterCat() {
 
       const idleBob = Math.sin(now / 560) * 1.2;
       const walkBob = s.phase === "walk" ? Math.sin(now / 105) * 1.8 : 0;
-      const bob = idleBob + walkBob;
       const direction = s.direction < 0 ? 1 : -1;
+      cat.style.transform = `translate3d(${s.x}px, ${b.maxY + idleBob + walkBob}px, 0) scaleX(${direction})`;
 
-      cat.style.transform = `translate3d(${s.x}px, ${b.maxY + bob}px, 0) scaleX(${direction})`;
-
-      // Keep the animation frame lightweight: only transform and data attributes change.
-      void dt;
+      last = now;
       raf = requestAnimationFrame(tick);
     };
 
@@ -122,6 +114,7 @@ export function CuteFooterCat() {
       style={{
         width: DESKTOP_WIDTH,
         aspectRatio: "480 / 300",
+        transformOrigin: "center bottom",
         willChange: "transform",
       }}
     >
@@ -180,19 +173,6 @@ export function CuteFooterCat() {
             <ellipse cx="277" cy="208" rx="79" ry="57" fill="url(#black-cat-fur)" stroke="#343a44" strokeWidth="3" />
             <ellipse cx="301" cy="190" rx="47" ry="30" fill="url(#black-cat-highlight)" opacity="0.42" />
 
-            <path
-              d="M190 225 Q202 196 220 215 L220 259 Q201 268 187 251 Z"
-              fill="#090c11"
-              stroke="#343a44"
-              strokeWidth="3"
-            />
-            <path
-              d="M259 225 Q271 197 288 215 L289 259 Q270 268 256 251 Z"
-              fill="#090c11"
-              stroke="#343a44"
-              strokeWidth="3"
-            />
-
             <g className="cat-leg cat-leg-back">
               <path d="M300 224 Q318 223 325 238 L324 262 Q314 271 300 263 Z" fill="#080b10" stroke="#343a44" strokeWidth="3" />
               <ellipse cx="313" cy="265" rx="19" ry="7" fill="#080b10" />
@@ -222,10 +202,10 @@ export function CuteFooterCat() {
             <g className="cat-eyes">
               <ellipse cx="225" cy="132" rx="22" ry="27" fill="#fffdf4" stroke="#5a4a34" strokeWidth="2.5" />
               <ellipse cx="283" cy="132" rx="22" ry="27" fill="#fffdf4" stroke="#5a4a34" strokeWidth="2.5" />
-              <ellipse className="cat-iris" cx="225" cy="134" rx="14" ry="19" fill="url(#cat-eye-iris)" />
-              <ellipse className="cat-iris" cx="283" cy="134" rx="14" ry="19" fill="url(#cat-eye-iris)" />
-              <ellipse className="cat-pupil" cx="226" cy="135" rx="5" ry="12" fill="#050505" />
-              <ellipse className="cat-pupil" cx="284" cy="135" rx="5" ry="12" fill="#050505" />
+              <ellipse cx="225" cy="134" rx="14" ry="19" fill="url(#cat-eye-iris)" />
+              <ellipse cx="283" cy="134" rx="14" ry="19" fill="url(#cat-eye-iris)" />
+              <ellipse cx="226" cy="135" rx="5" ry="12" fill="#050505" />
+              <ellipse cx="284" cy="135" rx="5" ry="12" fill="#050505" />
               <circle cx="220" cy="125" r="4" fill="#fff" />
               <circle cx="278" cy="125" r="4" fill="#fff" />
             </g>
