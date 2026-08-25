@@ -4,50 +4,50 @@ date: "2026-08-09"
 category: "Linux · Cybersecurity · DFIR"
 ---
 
-Linux ist in der Cybersecurity nicht nur eine Plattform für Server und Security-Tools. Die Shell liefert direkt die Informationen, die bei Netzwerkdiagnose, Incident Response, Forensik und System-Hardening entscheidend sein können.
+Linux ist für Cybersecurity nicht nur deshalb interessant, weil viele Server und Security-Tools darauf laufen. Über die Shell kommt man sehr direkt an Netzwerk-, Prozess-, Datei- und Systeminformationen. Genau das ist bei Analyse, Incident Response, Forensik und System-Hardening praktisch.
 
 ## Netzwerkverbindungen sichtbar machen
 
-Mit ss lassen sich aktive Verbindungen, lauschende Ports und Prozessinformationen schnell untersuchen. lsof ergänzt diese Sicht um die Zuordnung von Dateien und Netzwerk-Sockets zu Prozessen.
+Mit `ss` lassen sich aktive Verbindungen, offene Ports und Prozessinformationen schnell prüfen. `lsof` ergänzt das Ganze und zeigt unter anderem, welche Prozesse Dateien oder Netzwerk-Sockets verwenden.
 
 ## Prozesse und verdächtige Aktivitäten
 
-ps, top beziehungsweise htop und lsof helfen dabei, ungewöhnliche Prozesse, hohe Ressourcenlast und geöffnete Dateien zu erkennen. Eine auffällige CPU-Last ist dabei zunächst ein Indikator und noch kein Beweis für Malware.
+`ps`, `top` beziehungsweise `htop` und `lsof` helfen dabei, ungewöhnliche Prozesse, hohe Ressourcenlast oder geöffnete Dateien zu finden. Eine hohe CPU-Auslastung ist dabei erst einmal nur ein Hinweis. Sie kann viele Ursachen haben und ist noch kein Beweis für Malware.
 
 ## Dateisystem und Integrität
 
-find und grep eignen sich für die Suche nach kürzlich geänderten Dateien, ungewöhnlichen Berechtigungen und bestimmten Mustern. Für Integritätsprüfungen können SHA-256-Hashes erzeugt und später verglichen werden.
+`find` und `grep` sind praktisch, wenn nach kürzlich geänderten Dateien, ungewöhnlichen Berechtigungen oder bestimmten Mustern gesucht werden soll. Für Integritätsprüfungen lassen sich SHA-256-Hashes erzeugen und später vergleichen.
 
 ## Forensische Zeitlinien
 
-Dateisystem-Zeitstempel wie atime, mtime und ctime können bei der zeitlichen Rekonstruktion eines Vorfalls helfen. Aussagekräftig werden solche Daten vor allem in Verbindung mit Logs, Benutzeraktivitäten und Netzwerkereignissen.
+Zeitstempel wie `atime`, `mtime` und `ctime` können helfen, einen Vorfall zeitlich einzuordnen. Aussagekräftig werden sie vor allem dann, wenn sie zusammen mit Logs, Benutzeraktivitäten und Netzwerkereignissen betrachtet werden.
 
 ## Logs und Authentifizierung
 
-journalctl sowie distributionsabhängige Authentifizierungslogs sind wichtige Quellen für Incident Response. Fehlgeschlagene und erfolgreiche SSH-Anmeldungen können beispielsweise auf ungewöhnliche Aktivitäten hinweisen.
+`journalctl` und die je nach Distribution vorhandenen Authentifizierungslogs gehören zu den wichtigsten Quellen bei einer Incident Response. Fehlgeschlagene und erfolgreiche SSH-Anmeldungen können beispielsweise auffällige Aktivitäten sichtbar machen.
 
 ## Benutzer, Gruppen und SSH
 
-Für ein Security-Audit sind unter anderem Konten mit UID 0, Gruppenmitgliedschaften, Login-Historien und die effektive SSH-Konfiguration relevant. Änderungen sollten immer dokumentiert und auf die konkrete Systemrolle abgestimmt werden.
+Bei einem Security-Audit sind unter anderem Konten mit UID 0, Gruppenmitgliedschaften, Login-Historien und die tatsächlich verwendete SSH-Konfiguration interessant. Änderungen sollten dokumentiert werden und zur jeweiligen Rolle des Systems passen.
 
 ## System-Hardening
 
-Hardening umfasst unter anderem unnötige Dienste, Netzwerkparameter, Dateiberechtigungen, SSH und Firewall-Regeln. Pauschale Hardening-Skripte sind nicht grundsätzlich sicher: Einstellungen müssen zur Distribution und zum Einsatzzweck passen.
+Beim Hardening geht es unter anderem um unnötige Dienste, Netzwerkparameter, Dateiberechtigungen, SSH und Firewall-Regeln. Pauschale Hardening-Skripte sind dabei nicht automatisch eine gute Lösung. Einstellungen müssen zur Distribution und zum Einsatzzweck passen.
 
 ## Incident Response
 
-Bei einem Verdacht auf eine Kompromittierung sollte zunächst der Zustand dokumentiert werden. Eine strukturierte Triage kann Systeminformationen, Netzwerkverbindungen, Prozesse, Benutzeraktivität, Logs und kürzlich geänderte Dateien erfassen.
+Wenn der Verdacht auf eine Kompromittierung besteht, sollte zunächst der aktuelle Zustand dokumentiert werden. Eine strukturierte Triage kann Systeminformationen, Netzwerkverbindungen, Prozesse, Benutzeraktivität, Logs und kürzlich geänderte Dateien erfassen.
 
 ## Cryptomining als Anomalie
 
-Ungewöhnlich hohe CPU-Last kann unter anderem durch Cryptomining entstehen, aber ebenso durch legitime rechenintensive Prozesse. Eine belastbare Bewertung kombiniert Prozessdaten, Netzwerkverbindungen, Persistenzmechanismen, Dateisystemartefakte und Logs.
+Eine ungewöhnlich hohe CPU-Last kann unter anderem durch Cryptomining entstehen. Genauso gut kann aber ein legitimer, rechenintensiver Prozess dahinterstecken. Eine belastbare Einschätzung braucht deshalb mehrere Hinweise: Prozessdaten, Netzwerkverbindungen, Persistenzmechanismen, Dateisystemartefakte und Logs.
 
 ## Ressourcen und portable Security-Skripte
 
-Rekursive Dateisuchen, Paketmitschnitte und Hash-Berechnungen können selbst erhebliche Ressourcen verbrauchen. Für produktive Systeme sind daher kontrollierte Laufzeiten, reduzierte Prioritäten und geeignete Testumgebungen sinnvoll.
+Rekursive Dateisuchen, Paketmitschnitte und Hash-Berechnungen können selbst ordentlich Ressourcen verbrauchen. Auf produktiven Systemen sind deshalb kontrollierte Laufzeiten, reduzierte Prioritäten und geeignete Testumgebungen sinnvoll.
 
 ## Fazit
 
-Professionelle Linux-Security bedeutet nicht, möglichst viele Befehle auswendig zu kennen. Entscheidend ist zu verstehen, welche Information ein Werkzeug liefert und wie mehrere Quellen zu einer reproduzierbaren Analyse kombiniert werden können.
+Bei Linux-Security geht es nicht darum, möglichst viele Befehle auswendig zu kennen. Wichtiger ist zu verstehen, welche Information ein Werkzeug liefert und wie sich mehrere Quellen zu einer nachvollziehbaren Analyse verbinden lassen.
 
-Die Beispiele und Methoden sind für Administration, Defensive Security, autorisierte Analysen und Ausbildung gedacht. Scans und Sicherheitstests gehören ausschließlich in Systeme, für die eine ausdrückliche Berechtigung besteht.
+Die Beispiele und Methoden sind für Administration, Defensive Security, autorisierte Analysen und Ausbildung gedacht. Scans und Sicherheitstests gehören ausschließlich auf Systeme, für die eine ausdrückliche Berechtigung besteht.
