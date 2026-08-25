@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
-const THEME_STORAGE_KEY = "theme";
+// Versioned key intentionally resets the previous dark-mode default.
+// New visitors start in light mode; an explicit user choice is persisted.
+const THEME_STORAGE_KEY = "theme-v2";
 
 export function ThemeToggle() {
   const [dark, setDark] = useState(false);
