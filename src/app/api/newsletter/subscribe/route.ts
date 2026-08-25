@@ -25,7 +25,6 @@ function isRateLimited(key: string) {
   recent.push(now);
   requestLog.set(key, recent);
 
-  // Keep the in-memory map bounded on long-lived server instances.
   if (requestLog.size > 2000) {
     for (const [entryKey, timestamps] of requestLog) {
       if (timestamps.every((timestamp) => now - timestamp >= RATE_WINDOW_MS)) requestLog.delete(entryKey);
@@ -48,11 +47,9 @@ export async function POST(request: Request) {
     );
   }
 
-  let email = "";
-
   try {
     const body = await request.json();
-    email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+    const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
 
     if (!EMAIL_RE.test(email) || email.length > 254) {
       return NextResponse.json(
@@ -120,15 +117,6 @@ export async function POST(request: Request) {
 
     console.error("Brevo newsletter error:", response.status, details);
 
-    let brevoMessage = "";
-    try {
-      const parsed = JSON.parse(details) as { message?: unknown; code?: unknown };
-      if (typeof parsed.message === "string") brevoMessage = parsed.message;
-      if (typeof parsed.code === "string" && !brevoMessage) brevoMessage = parsed.code;
-    } catch {
-      brevoMessage = details.replace(/\s+/g, " ").trim().slice(0, 300);
-    }
-
     if (response.status === 400 && /already|exist/i.test(details)) {
       return NextResponse.json({
         ok: true,
@@ -138,32 +126,27 @@ export async function POST(request: Request) {
 
     if (response.status === 401 || response.status === 403) {
       return NextResponse.json(
-        { ok: false, message: "Die Newsletter-Verbindung zu Brevo ist nicht autorisiert. Bitte prüfe den API-Schlüssel in Vercel." },
+        { ok: false, message: "Die Newsletter-Verbindung ist momentan nicht verfügbar." },
         { status: 502 },
       );
     }
 
     if (response.status === 404) {
       return NextResponse.json(
-        { ok: false, message: "Die konfigurierte Newsletter-Liste wurde bei Brevo nicht gefunden. Bitte prüfe die Listen-ID in Vercel." },
+        { ok: false, message: "Die Newsletter-Liste ist momentan nicht verfügbar." },
         { status: 502 },
       );
     }
 
     if (response.status === 429) {
       return NextResponse.json(
-        { ok: false, message: "Brevo hat die Anfrage wegen zu vieler Anfragen abgelehnt. Bitte versuche es gleich noch einmal." },
+        { ok: false, message: "Zu viele Anfragen an den Newsletter-Dienst. Bitte versuche es gleich noch einmal." },
         { status: 502 },
       );
     }
 
     return NextResponse.json(
-      {
-        ok: false,
-        message: brevoMessage
-          ? `Brevo hat die Anmeldung abgelehnt: ${brevoMessage}`
-          : `Brevo hat die Anmeldung mit HTTP ${response.status} abgelehnt.`,
-      },
+      { ok: false, message: "Die Newsletter-Anmeldung konnte beim Versanddienst nicht verarbeitet werden." },
       { status: 502 },
     );
   } catch (error) {
