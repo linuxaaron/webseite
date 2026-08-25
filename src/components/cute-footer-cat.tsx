@@ -3,13 +3,16 @@
 import { useEffect, useRef } from "react";
 
 const SPRITE_SIZE = 32;
-const SPEED = 5;
+const SPEED = 10;
 const FOOTER_PADDING = 16;
 const SPRITE_URL = "https://raw.githubusercontent.com/adryd325/oneko.js/main/oneko.gif";
 
 const SPRITES = {
   idle: [[-3, -3]],
   alert: [[-7, -3]],
+  scratchSelf: [[-5, 0], [-6, 0], [-7, 0]],
+  tired: [[-3, -2]],
+  sleeping: [[-2, 0], [-2, -1]],
   N: [[-1, -2], [-1, -3]],
   NE: [[0, -2], [0, -3]],
   E: [[-3, 0], [-3, -1]],
@@ -22,6 +25,8 @@ const SPRITES = {
 
 type SpriteName = keyof typeof SPRITES;
 
+type Point = { x: number; y: number };
+
 export function CuteFooterCat() {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -31,52 +36,41 @@ export function CuteFooterCat() {
     if (!cat || !footer) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (reducedMotion.matches) {
-      cat.hidden = true;
-      return;
-    }
-
     let animationFrame = 0;
     let frameCount = 0;
     let lastFrameTimestamp = 0;
-    let mouseX = 0;
-    let mouseY = 0;
-    let catX = 0;
-    let catY = 0;
-    let initialized = false;
+    let mouse: Point = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    let catPosition: Point | null = null;
+
+    const getBounds = () => {
+      const rect = footer.getBoundingClientRect();
+      const minX = rect.left + FOOTER_PADDING + SPRITE_SIZE / 2;
+      const maxX = Math.max(minX, rect.right - FOOTER_PADDING - SPRITE_SIZE / 2);
+      const minY = rect.top + FOOTER_PADDING + SPRITE_SIZE / 2;
+      const maxY = Math.max(minY, rect.bottom - FOOTER_PADDING - SPRITE_SIZE / 2);
+      return { rect, minX, maxX, minY, maxY };
+    };
+
+    const clampToFooter = (point: Point): Point => {
+      const { minX, maxX, minY, maxY } = getBounds();
+      return {
+        x: Math.min(Math.max(point.x, minX), maxX),
+        y: Math.min(Math.max(point.y, minY), maxY),
+      };
+    };
 
     const setSprite = (name: SpriteName, frame: number) => {
       const sprite = SPRITES[name][frame % SPRITES[name].length];
       cat.style.backgroundPosition = `${sprite[0] * SPRITE_SIZE}px ${sprite[1] * SPRITE_SIZE}px`;
     };
 
-    const getBounds = () => {
-      const rect = footer.getBoundingClientRect();
-      return {
-        left: rect.left + FOOTER_PADDING + SPRITE_SIZE / 2,
-        right: Math.max(
-          rect.left + FOOTER_PADDING + SPRITE_SIZE / 2,
-          rect.right - FOOTER_PADDING - SPRITE_SIZE / 2,
-        ),
-        top: rect.top + FOOTER_PADDING + SPRITE_SIZE / 2,
-        bottom: Math.max(
-          rect.top + FOOTER_PADDING + SPRITE_SIZE / 2,
-          rect.bottom - FOOTER_PADDING - SPRITE_SIZE / 2,
-        ),
-      };
-    };
-
-    const clampTargetToFooter = () => {
-      const bounds = getBounds();
-      return {
-        x: Math.min(Math.max(mouseX, bounds.left), bounds.right),
-        y: Math.min(Math.max(mouseY, bounds.top), bounds.bottom),
-      };
+    const placeCat = (position: Point) => {
+      const { rect } = getBounds();
+      cat.style.transform = `translate3d(${position.x - rect.left - SPRITE_SIZE / 2}px, ${position.y - rect.top - SPRITE_SIZE / 2}px, 0)`;
     };
 
     const onMouseMove = (event: MouseEvent) => {
-      mouseX = event.clientX;
-      mouseY = event.clientY;
+      mouse = { x: event.clientX, y: event.clientY };
     };
 
     const onAnimationFrame = (timestamp: number) => {
@@ -90,48 +84,61 @@ export function CuteFooterCat() {
       lastFrameTimestamp = timestamp;
       frameCount += 1;
 
-      const target = clampTargetToFooter();
-      if (!initialized) {
-        catX = target.x;
-        catY = target.y;
-        initialized = true;
+      const { minX, maxX, minY, maxY } = getBounds();
+      const target = clampToFooter(mouse);
+
+      if (!catPosition) {
+        catPosition = {
+          x: Math.min(Math.max(target.x, minX), maxX),
+          y: maxY,
+        };
       }
 
-      const diffX = catX - target.x;
-      const diffY = catY - target.y;
+      if (reducedMotion.matches) {
+        setSprite("idle", 0);
+        placeCat(catPosition);
+        animationFrame = window.requestAnimationFrame(onAnimationFrame);
+        return;
+      }
+
+      const diffX = catPosition.x - target.x;
+      const diffY = catPosition.y - target.y;
       const distance = Math.hypot(diffX, diffY);
 
       if (distance < SPEED || distance < 48) {
         setSprite("idle", 0);
       } else {
-        let direction = "";
         const normalizedX = diffX / distance;
         const normalizedY = diffY / distance;
-
+        let direction = "";
         direction += normalizedY > 0.5 ? "N" : "";
         direction += normalizedY < -0.5 ? "S" : "";
         direction += normalizedX > 0.5 ? "W" : "";
         direction += normalizedX < -0.5 ? "E" : "";
 
         setSprite(direction as SpriteName, frameCount);
-        catX -= normalizedX * SPEED;
-        catY -= normalizedY * SPEED;
+        catPosition = {
+          x: catPosition.x - normalizedX * SPEED,
+          y: catPosition.y - normalizedY * SPEED,
+        };
       }
 
-      const bounds = getBounds();
-      catX = Math.min(Math.max(catX, bounds.left), bounds.right);
-      catY = Math.min(Math.max(catY, bounds.top), bounds.bottom);
-
-      const footerRect = footer.getBoundingClientRect();
-      const localX = catX - footerRect.left - SPRITE_SIZE / 2;
-      const localY = catY - footerRect.top - SPRITE_SIZE / 2;
-
-      cat.style.transform = `translate3d(${localX}px, ${localY}px, 0)`;
+      catPosition = {
+        x: Math.min(Math.max(catPosition.x, minX), maxX),
+        y: Math.min(Math.max(catPosition.y, minY), maxY),
+      };
+      placeCat(catPosition);
       animationFrame = window.requestAnimationFrame(onAnimationFrame);
     };
 
+    cat.style.backgroundImage = `url(${SPRITE_URL})`;
+    cat.style.backgroundRepeat = "no-repeat";
+    cat.style.backgroundSize = "256px 128px";
+    cat.style.backgroundPosition = "-96px -96px";
+    cat.style.imageRendering = "pixelated";
+    cat.style.display = "block";
+
     window.addEventListener("mousemove", onMouseMove, { passive: true });
-    setSprite("idle", 0);
     animationFrame = window.requestAnimationFrame(onAnimationFrame);
 
     return () => {
@@ -146,9 +153,8 @@ export function CuteFooterCat() {
       aria-hidden="true"
       className="pointer-events-none absolute left-0 top-0 z-[60] h-8 w-8 select-none"
       style={{
-        backgroundImage: `url(${SPRITE_URL})`,
-        backgroundRepeat: "no-repeat",
-        imageRendering: "pixelated",
+        width: SPRITE_SIZE,
+        height: SPRITE_SIZE,
         willChange: "transform, background-position",
       }}
     />
