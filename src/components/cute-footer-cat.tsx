@@ -127,16 +127,6 @@ export function CuteFooterCat() {
         willChange: "transform",
       }}
     >
-      <svg aria-hidden="true" className="absolute h-0 w-0" width="0" height="0" focusable="false">
-        <defs>
-          <filter id="cat-cutout" colorInterpolationFilters="sRGB">
-            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0.2126 0.7152 0.0722 0 0" />
-            <feComponentTransfer>
-              <feFuncA type="table" tableValues="0 0 0 0.15 0.55 0.85 1 1 1" />
-            </feComponentTransfer>
-          </filter>
-        </defs>
-      </svg>
       <img
         src={CAT_ART}
         alt=""
@@ -144,7 +134,7 @@ export function CuteFooterCat() {
         height={280}
         draggable={false}
         className="block h-full w-full object-contain"
-        style={{ filter: "url(#cat-cutout)" }}
+        style={{ mixBlendMode: "screen" }}
       />
       <span className="cat-blink" />
       <style jsx>{`
