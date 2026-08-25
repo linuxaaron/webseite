@@ -2,6 +2,7 @@
 
 import { ArrowRight, Github, Instagram, Mail } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { CuteFooterCat } from "@/components/cute-footer-cat";
 
 const COOKIE_STORAGE_KEY = "cookie-consent-v3";
 
@@ -71,6 +72,7 @@ export function SiteFooter() {
 
         <div className="mt-8 flex flex-col gap-3 text-xs text-[var(--muted)] sm:flex-row sm:items-center sm:justify-between"><p>© {new Date().getFullYear()} Linux Aaron. Alle Rechte vorbehalten.</p><div className="flex gap-3"><span>Made with Linux</span><span>•</span><span>Security first</span></div></div>
       </div>
+      <CuteFooterCat />
     </footer>
   );
 }
