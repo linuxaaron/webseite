@@ -4,8 +4,6 @@
 
 ## Website
 
-**Live:** https://linuxaaron.github.io/webseite/
-
 **Hauptwebsite:** https://joschaschmidt.com
 
 **GitHub:** https://github.com/linuxaaron
@@ -25,7 +23,9 @@ Die Website bündelt meine technischen Schwerpunkte und Projekte:
 
 ## Webentwicklung & Portfolio
 
-Die Website enthält einen eigenen Bereich für Webentwicklung und Portfolio-Projekte. Dort werden Leistungen, technische Schwerpunkte und ausgewählte Webprojekte dargestellt.
+Die Website enthält einen eigenen Bereich für Webentwicklung und Portfolio-Projekte. Das separate Webdesign-Portfolio mit den fertigen Demo-Webseiten befindet sich im Repository `linuxaaron/portfolio`.
+
+**Portfolio:** https://linuxaaron.github.io/portfolio/
 
 ## Projekte
 
