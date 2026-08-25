@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
+const THEME_STORAGE_KEY = "theme";
+
 export function ThemeToggle() {
-  const [dark, setDark] = useState(true);
+  const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("theme");
-    const isDark = stored ? stored === "dark" : true;
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    const isDark = stored === "dark";
+
     document.documentElement.classList.toggle("dark", isDark);
     setDark(isDark);
   }, []);
@@ -16,13 +19,19 @@ export function ThemeToggle() {
   function toggle() {
     const next = !dark;
     document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("theme", next ? "dark" : "light");
+    localStorage.setItem(THEME_STORAGE_KEY, next ? "dark" : "light");
     setDark(next);
   }
 
   return (
-    <button onClick={toggle} aria-label="Farbmodus wechseln" className="rounded-full border border-[var(--border)] p-2 text-[var(--muted)] transition hover:text-[var(--text)]">
-      {dark ? <Sun size={16} /> : <Moon size={16} />}
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={dark ? "Hellen Modus aktivieren" : "Dunklen Modus aktivieren"}
+      title={dark ? "Hellen Modus aktivieren" : "Dunklen Modus aktivieren"}
+      className="rounded-full border border-[var(--border)] p-2 text-[var(--muted)] transition hover:text-[var(--text)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"
+    >
+      {dark ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
     </button>
   );
 }
