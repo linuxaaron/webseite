@@ -117,7 +117,7 @@ export function CuteFooterCat() {
   }, []);
 
   return (
-    <div ref={catRef} aria-hidden="true" className="cute-footer-cat pointer-events-none absolute bottom-0 right-0 z-50 select-none motion-reduce:hidden" style={{ width: MAX_WIDTH, aspectRatio: `${ASPECT_RATIO}`, willChange: "transform" }}>
+    <div ref={catRef} aria-hidden="true" className="cute-footer-cat pointer-events-none absolute bottom-0 right-0 z-50 select-none" style={{ width: MAX_WIDTH, aspectRatio: `${ASPECT_RATIO}`, willChange: "transform" }}>
       <svg viewBox="0 0 300 200" width="300" height="200" className="h-full w-full overflow-visible drop-shadow-[0_8px_14px_rgba(0,0,0,0.22)]" xmlns="http://www.w3.org/2000/svg">
         <g className="cat-tail"><path d="M252 150c28 10 38-18 25-33-7-8-17-5-18 4 0 8 10 9 13 3" fill="none" stroke="#fff" strokeWidth="18" strokeLinecap="round"/><path d="M252 150c28 10 38-18 25-33-7-8-17-5-18 4 0 8 10 9 13 3" fill="none" stroke="#d8d8e2" strokeWidth="2" strokeLinecap="round"/></g>
         <ellipse cx="166" cy="151" rx="70" ry="38" fill="#fff" stroke="#d8d8e2" strokeWidth="3"/>
