@@ -2,21 +2,21 @@
 
 import { useEffect, useRef } from "react";
 
-const FOLLOW_DISTANCE = 95;
 const EDGE_GAP = 14;
-const DESKTOP_WIDTH = 150;
-const MOBILE_WIDTH = 112;
+const DESKTOP_WIDTH = 156;
+const MOBILE_WIDTH = 118;
+const WALK_DURATION = 6800;
+const PAUSE_DURATION = 1100;
+const START_DELAY = 900;
 
 export function CuteFooterCat() {
   const ref = useRef<HTMLDivElement>(null);
   const state = useRef({
     x: 0,
-    y: 0,
-    vx: 0,
-    vy: 0,
-    pointerX: 0,
-    pointerY: 0,
-    pointerInside: false,
+    phase: "pause" as "walk" | "pause",
+    direction: -1,
+    phaseStarted: 0,
+    initialized: false,
   });
 
   useEffect(() => {
@@ -30,48 +30,36 @@ export function CuteFooterCat() {
     const size = () => {
       const width = window.innerWidth < 640 ? MOBILE_WIDTH : DESKTOP_WIDTH;
       cat.style.width = `${width}px`;
-      cat.style.height = `${(width * 280) / 455}px`;
+      cat.style.height = `${(width * 300) / 480}px`;
     };
 
     const bounds = () => {
       const rect = footer.getBoundingClientRect();
       const width = cat.offsetWidth;
       const height = cat.offsetHeight;
+      const right = Math.max(EDGE_GAP, rect.width - width - EDGE_GAP);
+      const center = Math.max(EDGE_GAP, Math.min(right, (rect.width - width) / 2));
+
       return {
-        rect,
         minX: EDGE_GAP,
-        minY: EDGE_GAP,
-        maxX: Math.max(EDGE_GAP, rect.width - width - EDGE_GAP),
+        centerX: center,
+        maxX: right,
         maxY: Math.max(EDGE_GAP, rect.height - height - EDGE_GAP),
       };
+    };
+
+    const setWalkingState = (walking: boolean, direction: number) => {
+      cat.dataset.walking = walking ? "true" : "false";
+      cat.dataset.direction = direction < 0 ? "left" : "right";
     };
 
     const home = () => {
       const b = bounds();
       state.current.x = b.maxX;
-      state.current.y = b.maxY;
-      state.current.vx = 0;
-      state.current.vy = 0;
-    };
-
-    const move = (event: PointerEvent) => {
-      if (event.pointerType !== "mouse") return;
-      const b = bounds();
-      const inside =
-        event.clientX >= b.rect.left &&
-        event.clientX <= b.rect.right &&
-        event.clientY >= b.rect.top &&
-        event.clientY <= b.rect.bottom;
-
-      state.current.pointerInside = inside;
-      if (inside) {
-        state.current.pointerX = event.clientX - b.rect.left;
-        state.current.pointerY = event.clientY - b.rect.top;
-      }
-    };
-
-    const leave = () => {
-      state.current.pointerInside = false;
+      state.current.direction = -1;
+      state.current.phase = "pause";
+      state.current.phaseStarted = performance.now() + START_DELAY;
+      setWalkingState(false, -1);
     };
 
     const tick = (now: number) => {
@@ -80,59 +68,49 @@ export function CuteFooterCat() {
       const s = state.current;
       const b = bounds();
 
-      let targetX = b.maxX;
-      let targetY = b.maxY;
-
-      if (s.pointerInside) {
-        const centerX = s.x + cat.offsetWidth / 2;
-        const centerY = s.y + cat.offsetHeight / 2;
-        const dx = centerX - s.pointerX;
-        const dy = centerY - s.pointerY;
-        const distance = Math.hypot(dx, dy) || 1;
-
-        if (distance > FOLLOW_DISTANCE) {
-          targetX = s.pointerX + (dx / distance) * FOLLOW_DISTANCE - cat.offsetWidth / 2;
-          targetY = s.pointerY + (dy / distance) * FOLLOW_DISTANCE - cat.offsetHeight / 2;
+      if (s.phaseStarted <= now) {
+        if (s.phase === "pause") {
+          s.phase = "walk";
+          s.phaseStarted = now;
+          setWalkingState(true, s.direction);
         } else {
-          targetX = s.x;
-          targetY = s.y;
+          const duration = WALK_DURATION;
+          const progress = Math.min(1, (now - s.phaseStarted) / duration);
+          const from = s.direction < 0 ? b.maxX : b.centerX;
+          const to = s.direction < 0 ? b.centerX : b.maxX;
+          const eased = progress * progress * (3 - 2 * progress);
+          s.x = from + (to - from) * eased;
+
+          if (progress >= 1) {
+            s.x = to;
+            s.direction *= -1;
+            s.phase = "pause";
+            s.phaseStarted = now + PAUSE_DURATION;
+            setWalkingState(false, s.direction);
+          }
         }
-      } else {
-        const time = now / 1000;
-        targetX = b.maxX - Math.sin(time * 0.35) * 28;
-        targetY = b.maxY - 8 - Math.sin(time * 0.55) * 5;
       }
 
-      targetX = Math.min(b.maxX, Math.max(b.minX, targetX));
-      targetY = Math.min(b.maxY, Math.max(b.minY, targetY));
+      const idleBob = Math.sin(now / 560) * 1.2;
+      const walkBob = s.phase === "walk" ? Math.sin(now / 105) * 1.8 : 0;
+      const bob = idleBob + walkBob;
+      const direction = s.direction < 0 ? 1 : -1;
 
-      const stiffness = s.pointerInside ? 0.00075 : 0.00045;
-      const damping = 0.92;
-      s.vx = s.vx * damping + (targetX - s.x) * stiffness * dt;
-      s.vy = s.vy * damping + (targetY - s.y) * stiffness * dt;
-      s.x += s.vx * dt;
-      s.y += s.vy * dt;
+      cat.style.transform = `translate3d(${s.x}px, ${b.maxY + bob}px, 0) scaleX(${direction})`;
 
-      const bob = Math.sin(now / 700) * 1.8;
-      const tilt =
-        Math.sin(now / 1400) * 0.8 +
-        Math.max(-1.5, Math.min(1.5, s.vx * 0.08));
-      cat.style.transform = `translate3d(${s.x}px, ${s.y + bob}px, 0) rotate(${tilt}deg)`;
+      // Keep the animation frame lightweight: only transform and data attributes change.
+      void dt;
       raf = requestAnimationFrame(tick);
     };
 
     size();
     home();
     window.addEventListener("resize", size);
-    window.addEventListener("pointermove", move, { passive: true });
-    footer.addEventListener("pointerleave", leave);
     raf = requestAnimationFrame(tick);
 
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", size);
-      window.removeEventListener("pointermove", move);
-      footer.removeEventListener("pointerleave", leave);
     };
   }, []);
 
@@ -143,168 +121,184 @@ export function CuteFooterCat() {
       className="cute-footer-cat pointer-events-none absolute left-0 top-0 z-[60] select-none"
       style={{
         width: DESKTOP_WIDTH,
-        aspectRatio: "455 / 280",
+        aspectRatio: "480 / 300",
         willChange: "transform",
       }}
     >
       <svg
-        viewBox="0 0 455 280"
-        width="455"
-        height="280"
+        viewBox="0 0 480 300"
+        width="480"
+        height="300"
         className="block h-full w-full overflow-visible"
         role="presentation"
       >
         <defs>
-          <linearGradient id="cat-fur" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#ffffff" />
-            <stop offset="1" stopColor="#e9edf3" />
+          <linearGradient id="black-cat-fur" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#20242b" />
+            <stop offset="0.52" stopColor="#0c0f14" />
+            <stop offset="1" stopColor="#05070a" />
           </linearGradient>
-          <linearGradient id="cat-ear" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#ffc6cf" />
-            <stop offset="1" stopColor="#f29aa8" />
+          <linearGradient id="black-cat-highlight" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#454b55" stopOpacity="0.9" />
+            <stop offset="1" stopColor="#171b22" stopOpacity="0" />
           </linearGradient>
-          <radialGradient id="cat-eye" cx="45%" cy="38%" r="65%">
-            <stop offset="0" stopColor="#8fe8ff" />
-            <stop offset="0.45" stopColor="#35b9ed" />
-            <stop offset="1" stopColor="#0877b6" />
+          <linearGradient id="cat-ear-inner" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#eaa6b6" />
+            <stop offset="1" stopColor="#9d536d" />
+          </linearGradient>
+          <radialGradient id="cat-eye-iris" cx="42%" cy="35%" r="68%">
+            <stop offset="0" stopColor="#fff4bb" />
+            <stop offset="0.45" stopColor="#e8b75a" />
+            <stop offset="1" stopColor="#a86c24" />
           </radialGradient>
-          <filter id="cat-shadow" x="-30%" y="-30%" width="160%" height="170%">
-            <feDropShadow dx="0" dy="8" stdDeviation="7" floodOpacity="0.28" />
+          <filter id="cat-shadow" x="-30%" y="-30%" width="160%" height="180%">
+            <feDropShadow dx="0" dy="9" stdDeviation="7" floodOpacity="0.26" />
           </filter>
         </defs>
 
         <g filter="url(#cat-shadow)">
-          <ellipse cx="251" cy="252" rx="104" ry="11" fill="#0b1220" opacity="0.22" />
+          <ellipse cx="255" cy="270" rx="103" ry="10" fill="#03050a" opacity="0.28" />
 
-          <path
-            className="cat-tail"
-            d="M335 210 C390 238 422 210 405 175 C395 154 372 163 381 182 C388 198 405 187 397 174"
-            fill="none"
-            stroke="url(#cat-fur)"
-            strokeWidth="25"
-            strokeLinecap="round"
-          />
-          <path
-            d="M335 210 C390 238 422 210 405 175"
-            fill="none"
-            stroke="#cbd2dc"
-            strokeWidth="2.5"
-            opacity="0.8"
-          />
+          <g className="cat-body">
+            <path
+              className="cat-tail"
+              d="M330 218 C382 250 431 235 424 195 C421 175 397 169 389 187 C385 197 393 207 403 205"
+              fill="none"
+              stroke="url(#black-cat-fur)"
+              strokeWidth="27"
+              strokeLinecap="round"
+            />
+            <path
+              d="M331 216 C380 242 422 228 417 194"
+              fill="none"
+              stroke="#5b626e"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              opacity="0.7"
+            />
 
-          <ellipse cx="280" cy="193" rx="77" ry="58" fill="url(#cat-fur)" stroke="#b9c1cc" strokeWidth="3" />
-          <ellipse cx="224" cy="205" rx="48" ry="36" fill="#f7f9fb" stroke="#b9c1cc" strokeWidth="3" />
+            <ellipse cx="277" cy="208" rx="79" ry="57" fill="url(#black-cat-fur)" stroke="#343a44" strokeWidth="3" />
+            <ellipse cx="301" cy="190" rx="47" ry="30" fill="url(#black-cat-highlight)" opacity="0.42" />
 
-          <path
-            d="M184 134 L177 55 Q177 45 186 51 L224 82 L265 51 Q273 45 272 56 L268 133"
-            fill="url(#cat-fur)"
-            stroke="#b9c1cc"
-            strokeWidth="3"
-            strokeLinejoin="round"
-          />
-          <path d="M188 65 L190 107 L217 85 Z" fill="url(#cat-ear)" />
-          <path d="M260 65 L258 106 L231 85 Z" fill="url(#cat-ear)" />
+            <path
+              d="M190 225 Q202 196 220 215 L220 259 Q201 268 187 251 Z"
+              fill="#090c11"
+              stroke="#343a44"
+              strokeWidth="3"
+            />
+            <path
+              d="M259 225 Q271 197 288 215 L289 259 Q270 268 256 251 Z"
+              fill="#090c11"
+              stroke="#343a44"
+              strokeWidth="3"
+            />
 
-          <ellipse cx="224" cy="126" rx="65" ry="60" fill="url(#cat-fur)" stroke="#b9c1cc" strokeWidth="3" />
-          <path d="M197 87 Q224 69 251 87" fill="none" stroke="#ffffff" strokeWidth="13" strokeLinecap="round" opacity="0.9" />
-
-          <ellipse cx="202" cy="121" rx="18" ry="23" fill="#fff" stroke="#4a5563" strokeWidth="2.5" />
-          <ellipse cx="247" cy="121" rx="18" ry="23" fill="#fff" stroke="#4a5563" strokeWidth="2.5" />
-          <ellipse className="cat-eye" cx="205" cy="124" rx="10" ry="15" fill="url(#cat-eye)" />
-          <ellipse className="cat-eye" cx="244" cy="124" rx="10" ry="15" fill="url(#cat-eye)" />
-          <ellipse cx="208" cy="119" rx="3.5" ry="6" fill="#fff" />
-          <ellipse cx="247" cy="119" rx="3.5" ry="6" fill="#fff" />
-
-          <path d="M219 143 Q224 139 229 143 Q224 150 219 143Z" fill="#e98798" stroke="#8f5964" strokeWidth="1.5" />
-          <path d="M224 149 Q218 159 209 151 M224 149 Q230 159 239 151" fill="none" stroke="#7a515a" strokeWidth="2" strokeLinecap="round" />
-
-          <path d="M189 144 L151 137 M190 151 L149 153 M191 158 L155 168" stroke="#7b8795" strokeWidth="2" strokeLinecap="round" />
-          <path d="M259 144 L297 137 M258 151 L299 153 M257 158 L293 168" stroke="#7b8795" strokeWidth="2" strokeLinecap="round" />
-
-          <path d="M205 191 Q223 175 241 191 Q239 211 223 217 Q207 211 205 191Z" fill="#f9fbfd" stroke="#b9c1cc" strokeWidth="2.5" />
-          <path d="M209 197 Q219 188 223 197 Q227 188 237 197" fill="none" stroke="#c7ced8" strokeWidth="2" />
-
-          <g className="cat-paw cat-paw-left">
-            <ellipse cx="193" cy="220" rx="22" ry="15" fill="#fff" stroke="#b9c1cc" strokeWidth="3" />
-            <circle cx="187" cy="220" r="3" fill="#f2a3b1" />
-            <circle cx="197" cy="218" r="3" fill="#f2a3b1" />
-          </g>
-          <g className="cat-paw cat-paw-right">
-            <ellipse cx="246" cy="220" rx="22" ry="15" fill="#fff" stroke="#b9c1cc" strokeWidth="3" />
-            <circle cx="240" cy="220" r="3" fill="#f2a3b1" />
-            <circle cx="250" cy="218" r="3" fill="#f2a3b1" />
+            <g className="cat-leg cat-leg-back">
+              <path d="M300 224 Q318 223 325 238 L324 262 Q314 271 300 263 Z" fill="#080b10" stroke="#343a44" strokeWidth="3" />
+              <ellipse cx="313" cy="265" rx="19" ry="7" fill="#080b10" />
+            </g>
+            <g className="cat-leg cat-leg-front">
+              <path d="M244 224 Q261 221 269 239 L268 263 Q257 272 243 263 Z" fill="#0a0d12" stroke="#343a44" strokeWidth="3" />
+              <ellipse cx="256" cy="266" rx="19" ry="7" fill="#0a0d12" />
+            </g>
           </g>
 
-          <g className="cat-yarn">
-            <circle cx="124" cy="229" r="23" fill="#5fc7ff" stroke="#1876a9" strokeWidth="3" />
-            <path d="M106 221 Q124 236 143 218 M104 231 Q123 244 145 226 M111 211 Q125 222 140 209" fill="none" stroke="#d8f4ff" strokeWidth="2" opacity="0.9" />
-            <path d="M143 230 C165 245 177 238 188 229 C202 218 213 225 224 230" fill="none" stroke="#55baf1" strokeWidth="4" strokeLinecap="round" />
-          </g>
+          <g className="cat-head">
+            <path
+              d="M174 154 L177 62 Q178 49 188 57 L228 90 Q254 79 279 91 L320 57 Q330 49 331 63 L334 153"
+              fill="url(#black-cat-fur)"
+              stroke="#343a44"
+              strokeWidth="3"
+              strokeLinejoin="round"
+            />
+            <path d="M188 72 L190 124 L219 96 Z" fill="url(#cat-ear-inner)" />
+            <path d="M320 72 L318 124 L289 96 Z" fill="url(#cat-ear-inner)" />
+            <path d="M191 69 L192 96 L207 83" fill="none" stroke="#6b727d" strokeWidth="3" strokeLinecap="round" opacity="0.65" />
+            <path d="M317 69 L316 96 L301 83" fill="none" stroke="#6b727d" strokeWidth="3" strokeLinecap="round" opacity="0.65" />
 
-          <g className="cat-sparkles" fill="#48c8ff">
-            <path d="M110 151 l4 9 9 4-9 4-4 9-4-9-9-4 9-4z" />
-            <path d="M303 92 l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" />
-            <circle cx="331" cy="137" r="4" />
+            <ellipse cx="254" cy="137" rx="77" ry="67" fill="url(#black-cat-fur)" stroke="#343a44" strokeWidth="3" />
+            <path d="M204 105 Q254 75 304 105" fill="none" stroke="#555c67" strokeWidth="8" strokeLinecap="round" opacity="0.26" />
+
+            <g className="cat-eyes">
+              <ellipse cx="225" cy="132" rx="22" ry="27" fill="#fffdf4" stroke="#5a4a34" strokeWidth="2.5" />
+              <ellipse cx="283" cy="132" rx="22" ry="27" fill="#fffdf4" stroke="#5a4a34" strokeWidth="2.5" />
+              <ellipse className="cat-iris" cx="225" cy="134" rx="14" ry="19" fill="url(#cat-eye-iris)" />
+              <ellipse className="cat-iris" cx="283" cy="134" rx="14" ry="19" fill="url(#cat-eye-iris)" />
+              <ellipse className="cat-pupil" cx="226" cy="135" rx="5" ry="12" fill="#050505" />
+              <ellipse className="cat-pupil" cx="284" cy="135" rx="5" ry="12" fill="#050505" />
+              <circle cx="220" cy="125" r="4" fill="#fff" />
+              <circle cx="278" cy="125" r="4" fill="#fff" />
+            </g>
+
+            <path d="M247 161 Q254 155 261 161 Q254 170 247 161Z" fill="#d8869b" stroke="#70414e" strokeWidth="1.5" />
+            <path d="M254 169 Q247 180 237 172 M254 169 Q261 180 271 172" fill="none" stroke="#744b57" strokeWidth="2.2" strokeLinecap="round" />
+
+            <path d="M216 164 L166 157 M216 172 L162 171 M217 180 L168 188" stroke="#8d96a3" strokeWidth="2" strokeLinecap="round" opacity="0.88" />
+            <path d="M292 164 L342 157 M292 172 L346 171 M291 180 L340 188" stroke="#8d96a3" strokeWidth="2" strokeLinecap="round" opacity="0.88" />
+
+            <path d="M225 202 Q254 184 283 202 Q279 225 254 231 Q229 225 225 202Z" fill="#171b22" stroke="#343a44" strokeWidth="2.5" />
+            <path d="M234 207 Q245 197 254 207 Q263 197 274 207" fill="none" stroke="#69717c" strokeWidth="2" opacity="0.55" />
           </g>
         </g>
       </svg>
 
       <style jsx>{`
+        .cute-footer-cat[data-walking="true"] .cat-tail {
+          animation: tail-walk 0.8s ease-in-out infinite alternate;
+        }
+        .cute-footer-cat[data-walking="true"] .cat-leg-front {
+          animation: leg-front 0.34s ease-in-out infinite alternate;
+        }
+        .cute-footer-cat[data-walking="true"] .cat-leg-back {
+          animation: leg-back 0.34s ease-in-out 0.17s infinite alternate;
+        }
         .cat-tail {
-          transform-origin: 337px 209px;
-          animation: tail 2.8s ease-in-out infinite;
+          transform-origin: 332px 216px;
+          animation: tail-idle 2.6s ease-in-out infinite;
         }
-        .cat-paw-left {
-          transform-origin: 193px 220px;
-          animation: paw-left 3.4s ease-in-out infinite;
-        }
-        .cat-paw-right {
-          transform-origin: 246px 220px;
-          animation: paw-right 3.4s ease-in-out infinite;
-        }
-        .cat-yarn {
-          transform-origin: 124px 229px;
-          animation: yarn 3.4s ease-in-out infinite;
-        }
-        .cat-sparkles {
-          animation: sparkle 2.6s ease-in-out infinite;
-        }
-        .cat-eye {
+        .cat-eyes {
           transform-box: fill-box;
           transform-origin: center;
-          animation: blink 5.2s ease-in-out infinite;
+          animation: blink 2.9s ease-in-out infinite;
         }
-        @keyframes tail {
+        .cat-head {
+          transform-origin: 254px 194px;
+          animation: head-bob 1.05s ease-in-out infinite;
+        }
+        @keyframes tail-idle {
           0%, 100% { transform: rotate(-3deg); }
           50% { transform: rotate(8deg); }
         }
-        @keyframes paw-left {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-3px) rotate(-3deg); }
+        @keyframes tail-walk {
+          from { transform: rotate(-10deg); }
+          to { transform: rotate(13deg); }
         }
-        @keyframes paw-right {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(2px) rotate(3deg); }
+        @keyframes leg-front {
+          from { transform: translateY(0) rotate(-7deg); transform-origin: 256px 230px; }
+          to { transform: translateY(-2px) rotate(8deg); transform-origin: 256px 230px; }
         }
-        @keyframes yarn {
-          0%, 100% { transform: rotate(0deg) translateY(0); }
-          50% { transform: rotate(-4deg) translateY(-2px); }
+        @keyframes leg-back {
+          from { transform: translateY(-2px) rotate(8deg); transform-origin: 313px 230px; }
+          to { transform: translateY(0) rotate(-7deg); transform-origin: 313px 230px; }
         }
-        @keyframes sparkle {
-          0%, 100% { opacity: .55; transform: scale(.92); }
-          50% { opacity: 1; transform: scale(1.08); }
+        @keyframes head-bob {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-1.5px); }
         }
         @keyframes blink {
-          0%, 88%, 100% { transform: scaleY(1); }
-          90%, 94% { transform: scaleY(.08); }
+          0%, 82%, 100% { transform: scaleY(1); }
+          85%, 89% { transform: scaleY(0.07); }
+          91% { transform: scaleY(1); }
         }
         @media (prefers-reduced-motion: reduce) {
+          .cute-footer-cat[data-walking="true"] .cat-tail,
+          .cute-footer-cat[data-walking="true"] .cat-leg-front,
+          .cute-footer-cat[data-walking="true"] .cat-leg-back,
           .cat-tail,
-          .cat-paw-left,
-          .cat-paw-right,
-          .cat-yarn,
-          .cat-sparkles,
-          .cat-eye { animation: none; }
+          .cat-eyes,
+          .cat-head {
+            animation: none;
+          }
         }
       `}</style>
     </div>
