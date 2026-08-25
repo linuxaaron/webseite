@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowUpRight, Shield, Search, LayoutDashboard, BriefcaseBusiness } from "lucide-react";
+import { ArrowUpRight, Shield, Search, LayoutDashboard, BriefcaseBusiness, Database } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 
 export const metadata: Metadata = {
@@ -15,6 +15,13 @@ const projects = [
     href: "https://github.com/linuxaaron/web-osint",
     icon: Search,
     tags: ["OSINT", "Go", "Web Analysis"],
+  },
+  {
+    name: "OSINT ADHD",
+    description: "Strukturierte und kuratierte Sammlung von OSINT-Ressourcen für webbasierte Recherchen. Enthält die Ressourcen des offiziellen OSINT Frameworks sowie eine getrennte Sammlung persönlicher Empfehlungen, mit Fokus auf nachvollziehbare Quellen, Datenqualität und verantwortungsvolle Nutzung.",
+    href: "https://github.com/linuxaaron/Osint-ADHD",
+    icon: Database,
+    tags: ["OSINT", "Ressourcensammlung", "Open Source"],
   },
   {
     name: "malware-analyzer",
