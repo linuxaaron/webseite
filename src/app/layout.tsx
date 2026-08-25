@@ -38,9 +38,14 @@ const websiteSchema = { "@context": "https://schema.org", "@type": "WebSite", "@
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="de" className="dark">
+    <html lang="de">
       <head>
         <meta name="google-site-verification" content="SjcxIb0LYpV5eAe7mZOXWJgi7nXtGW8fSQIGP2A9erY" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try { if (localStorage.getItem("theme") === "dark") document.documentElement.classList.add("dark"); } catch {}`,
+          }}
+        />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
       </head>
