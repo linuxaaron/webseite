@@ -32,7 +32,7 @@ const projects = [
   },
   {
     name: "portfolio",
-    description: "Eigenständiges persönliches Portfolio mit Fokus auf Webentwicklung, Full-Stack Development, Cybersecurity, OSINT, Linux/Unix, Netzwerktechnik und Open Source.",
+    description: "Eigenständiges persönliches Portfolio mit Fokus auf Webentwicklung, Full Stack Development, Cybersecurity, OSINT, Linux/Unix, Netzwerktechnik und Open Source.",
     href: "https://github.com/linuxaaron/portfolio",
     icon: BriefcaseBusiness,
     tags: ["Portfolio", "Web Development", "Open Source"],
