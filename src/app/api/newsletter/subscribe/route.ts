@@ -60,13 +60,23 @@ export async function POST(request: Request) {
 
     const apiKey = process.env.BREVO_API_KEY;
     const configuredListId = process.env.BREVO_NEWSLETTER_LIST_ID;
+    const configuredTemplateId = process.env.BREVO_DOI_TEMPLATE_ID;
     const listId = configuredListId ? Number(configuredListId) : DEFAULT_NEWSLETTER_LIST_ID;
+    const templateId = configuredTemplateId ? Number(configuredTemplateId) : NaN;
 
-    if (!apiKey || !Number.isInteger(listId) || listId <= 0) {
+    if (
+      !apiKey ||
+      !Number.isInteger(listId) ||
+      listId <= 0 ||
+      !Number.isInteger(templateId) ||
+      templateId <= 0
+    ) {
       console.error("Newsletter configuration is incomplete.", {
         hasApiKey: Boolean(apiKey),
         hasConfiguredListId: Boolean(configuredListId),
         hasValidListId: Number.isInteger(listId) && listId > 0,
+        hasConfiguredTemplateId: Boolean(configuredTemplateId),
+        hasValidTemplateId: Number.isInteger(templateId) && templateId > 0,
       });
       return NextResponse.json(
         { ok: false, message: "Die Newsletter-Anmeldung ist momentan noch nicht vollständig eingerichtet." },
@@ -79,14 +89,19 @@ export async function POST(request: Request) {
 
     let response: Response;
     try {
-      response = await fetch("https://api.brevo.com/v3/contacts", {
+      response = await fetch("https://api.brevo.com/v3/contacts/doubleOptinConfirmation", {
         method: "POST",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
           "api-key": apiKey,
         },
-        body: JSON.stringify({ email, listIds: [listId], updateEnabled: true }),
+        body: JSON.stringify({
+          email,
+          includeListIds: [listId],
+          redirectionUrl: "https://joschaschmidt.com/",
+          templateId,
+        }),
         cache: "no-store",
         signal: controller.signal,
       });
@@ -111,7 +126,7 @@ export async function POST(request: Request) {
     if (response.ok) {
       return NextResponse.json({
         ok: true,
-        message: "Fast geschafft: Bitte prüfe dein Postfach. Die Anmeldung wird erst nach deiner Bestätigung aktiv.",
+        message: "Fast geschafft: Bitte prüfe dein Postfach und bestätige deine Newsletter-Anmeldung.",
       });
     }
 
@@ -133,7 +148,7 @@ export async function POST(request: Request) {
 
     if (response.status === 404) {
       return NextResponse.json(
-        { ok: false, message: "Die Newsletter-Liste ist momentan nicht verfügbar." },
+        { ok: false, message: "Die Newsletter-Konfiguration ist momentan nicht verfügbar." },
         { status: 502 },
       );
     }
