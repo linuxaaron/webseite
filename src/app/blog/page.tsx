@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 const posts = [
+  { slug: "vpn-empfehlungen-proton-mullvad", title: "Meine VPN-Empfehlungen: Proton VPN und Mullvad VPN", date: "2026-08-26", category: "VPN · Datenschutz · Cybersecurity", excerpt: "Warum ich Proton VPN und Mullvad VPN empfehle – mit Fokus auf No-Logs, unabhängige Audits, Datensparsamkeit und nachvollziehbare Sicherheitsversprechen." },
   { slug: "hardware-geldmacherei-it-einsteiger", title: "Braucht man wirklich 64 oder 128 GB RAM? Wenn IT-Hardware zur Geldmacherei wird", date: "2026-08-09", category: "Hardware · Linux · IT-Einstieg", excerpt: "Warum man für den Einstieg in die IT nicht automatisch High-End-Hardware braucht – und weshalb ein günstiger Rechner oft das bessere Lernwerkzeug ist." },
   { slug: "burp-suite-nuclei-websecurity", title: "Burp Suite & Nuclei: Zwei Werkzeuge für moderne Web-Security-Analysen", date: "2026-08-09", category: "Web Security · Burp Suite · Nuclei", excerpt: "Wie Burp Suite bei der interaktiven HTTP-Analyse und Nuclei bei wiederholbaren Checks helfen – und warum beide Ergebnisse manuell geprüft werden müssen." },
   { slug: "essential-linux-commands-cybersecurity", title: "Linux für Cybersecurity: Befehle, Analyse & Incident Response", date: "2026-08-09", category: "Linux · Cybersecurity · DFIR", excerpt: "Ein Praxisbeitrag zu Netzwerkdiagnose, Prozessanalyse, Forensik, Log-Analyse, Hardening und strukturierter Incident Response." },

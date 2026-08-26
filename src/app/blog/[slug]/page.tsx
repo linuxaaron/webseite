@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const posts = ["osint-webanalyse", "essential-linux-commands-cybersecurity", "burp-suite-nuclei-websecurity", "hardware-geldmacherei-it-einsteiger"];
+const posts = ["vpn-empfehlungen-proton-mullvad", "osint-webanalyse", "essential-linux-commands-cybersecurity", "burp-suite-nuclei-websecurity", "hardware-geldmacherei-it-einsteiger"];
 type Frontmatter = { title: string; date: string; category: string };
 
 function parseFrontmatter(source: string): { frontmatter: Frontmatter; body: string } {
@@ -13,7 +13,7 @@ function parseFrontmatter(source: string): { frontmatter: Frontmatter; body: str
   const values = Object.fromEntries(match[1].split("\n").map((line) => {
     const separator = line.indexOf(":");
     if (separator < 0) return [line.trim(), ""];
-    return [line.slice(0, separator).trim(), line.slice(separator + 1).trim().replace(/^"|"$/g, "")];
+    return [line.slice(0, separator).trim(), line.slice(separator + 1).trim().replace(/^\"|\"$/g, "")];
   }));
   return { frontmatter: { title: values.title ?? "", date: values.date ?? "", category: values.category ?? "" }, body: match[2].trim() };
 }
