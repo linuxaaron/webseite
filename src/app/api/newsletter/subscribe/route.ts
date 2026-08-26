@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const BREVO_TIMEOUT_MS = 7000;
 const DEFAULT_NEWSLETTER_LIST_ID = 4;
+const DEFAULT_DOI_TEMPLATE_ID = 6;
 const MAX_BODY_BYTES = 8 * 1024;
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 const RATE_LIMIT = 5;
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
     const configuredListId = process.env.BREVO_NEWSLETTER_LIST_ID;
     const configuredTemplateId = process.env.BREVO_DOI_TEMPLATE_ID;
     const listId = configuredListId ? Number(configuredListId) : DEFAULT_NEWSLETTER_LIST_ID;
-    const templateId = configuredTemplateId ? Number(configuredTemplateId) : NaN;
+    const templateId = configuredTemplateId ? Number(configuredTemplateId) : DEFAULT_DOI_TEMPLATE_ID;
 
     if (
       !apiKey ||
