@@ -17,16 +17,18 @@ const routes = [
   { path: "/rechtlicher-hinweis", priority: 0.3, changeFrequency: "yearly" as const },
   { path: "/impressum", priority: 0.2, changeFrequency: "yearly" as const },
   { path: "/datenschutz", priority: 0.2, changeFrequency: "yearly" as const },
-  { path: "/blog/osint-webanalyse", priority: 0.7, changeFrequency: "monthly" as const },
-  { path: "/blog/essential-linux-commands-cybersecurity", priority: 0.7, changeFrequency: "monthly" as const },
-  { path: "/blog/burp-suite-nuclei-websecurity", priority: 0.7, changeFrequency: "monthly" as const },
-  { path: "/blog/hardware-geldmacherei-it-einsteiger", priority: 0.7, changeFrequency: "monthly" as const },
+  { path: "/blog/osint-webanalyse", priority: 0.7, changeFrequency: "monthly" as const, lastModified: "2026-08-08" },
+  { path: "/blog/essential-linux-commands-cybersecurity", priority: 0.7, changeFrequency: "monthly" as const, lastModified: "2026-08-09" },
+  { path: "/blog/burp-suite-nuclei-websecurity", priority: 0.7, changeFrequency: "monthly" as const, lastModified: "2026-08-09" },
+  { path: "/blog/hardware-geldmacherei-it-einsteiger", priority: 0.7, changeFrequency: "monthly" as const, lastModified: "2026-08-09" },
+  { path: "/blog/vpn-empfehlungen-proton-mullvad", priority: 0.8, changeFrequency: "weekly" as const, lastModified: "2026-08-26" },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return routes.map(({ path, priority, changeFrequency }) => ({
+  return routes.map(({ path, priority, changeFrequency, lastModified }) => ({
     url: `${base}${path}`,
     changeFrequency,
     priority,
+    ...(lastModified ? { lastModified } : {}),
   }));
 }
