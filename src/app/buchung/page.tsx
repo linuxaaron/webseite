@@ -39,6 +39,10 @@ export default function BookingPage() {
         </article>
       </section>
 
+      <section className="mt-6 rounded-2xl border border-[var(--accent)]/40 bg-[var(--surface-2)] p-7 sm:p-8">
+        <div className="flex gap-4"><ShieldCheck className="mt-1 shrink-0 text-[var(--accent)]" size={22}/><div><h2 className="text-lg font-semibold">Webseiten auf Schwachstellen prüfen</h2><p className="mt-2 leading-7 text-[var(--muted)]">Auch Unternehmen können mich gerne anfragen, wenn sie ihre eigene Webseite auf technische Fehler oder mögliche Schwachstellen überprüfen lassen möchten. Solche Prüfungen führe ich ausschließlich mit ausdrücklicher Erlaubnis und innerhalb eines vorher gemeinsam festgelegten Scopes durch.</p><a href={`mailto:${email}?subject=Anfrage%20%E2%80%93%20Webseiten%20Security%20Prüfung`} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:brightness-110"><Mail size={16}/> Prüfung anfragen</a></div></div>
+      </section>
+
       <section className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-7 sm:p-8">
         <div className="flex gap-4"><ShieldCheck className="mt-1 shrink-0 text-[var(--accent)]" size={22}/><div><h2 className="text-lg font-semibold">So läuft die Anfrage ab</h2><p className="mt-2 leading-7 text-[var(--muted)]">Schreib kurz, worum es geht, für wen die Leistung gedacht ist, welchen Umfang du dir vorstellst und welcher Zeitraum für dich passt. Danach klären wir Scope, Termin, Format und Konditionen. Verbindlich wird die Buchung erst nach meiner Bestätigung.</p><p className="mt-4 text-sm text-[var(--muted)]">Direkter Kontakt: <a className="text-[var(--accent)] hover:underline" href={`mailto:${email}`}>{email}</a></p></div></div>
       </section>
