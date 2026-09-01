@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const posts = ["vpn-empfehlungen-proton-mullvad", "osint-webanalyse", "essential-linux-commands-cybersecurity", "burp-suite-nuclei-websecurity", "hardware-geldmacherei-it-einsteiger"];
+const posts = ["welches-betriebssystem-empfehle-ich", "vpn-empfehlungen-proton-mullvad", "osint-webanalyse", "essential-linux-commands-cybersecurity", "burp-suite-nuclei-websecurity", "hardware-geldmacherei-it-einsteiger"];
 type Frontmatter = { title: string; date: string; category: string };
 
 function parseFrontmatter(source: string): { frontmatter: Frontmatter; body: string } {
