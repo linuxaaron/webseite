@@ -11,11 +11,15 @@ export function ThemeToggle() {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    const isDark = stored === "dark";
+    const timer = window.setTimeout(() => {
+      const stored = localStorage.getItem(THEME_STORAGE_KEY);
+      const isDark = stored === "dark";
 
-    document.documentElement.classList.toggle("dark", isDark);
-    setDark(isDark);
+      document.documentElement.classList.toggle("dark", isDark);
+      setDark(isDark);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   function toggle() {

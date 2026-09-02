@@ -5,6 +5,7 @@ import { Cookie, ShieldCheck, X } from "lucide-react";
 
 const STORAGE_KEY = "cookie-consent-v3";
 const OPEN_SETTINGS_EVENT = "open-cookie-settings";
+const CONSENT_UPDATED_EVENT = "cookie-consent-updated";
 
 export type CookieConsentChoice = "accepted" | "rejected";
 
@@ -14,17 +15,23 @@ export function CookieConsent() {
   const [analytics, setAnalytics] = useState(false);
 
   useEffect(() => {
-    try {
-      const choice = window.localStorage.getItem(STORAGE_KEY);
-      setVisible(choice === null);
-      setAnalytics(choice === "accepted");
-    } catch {
-      setVisible(true);
-    }
+    const initialize = () => {
+      try {
+        const choice = window.localStorage.getItem(STORAGE_KEY);
+        setVisible(choice === null);
+        setAnalytics(choice === "accepted");
+      } catch {
+        setVisible(true);
+      }
+    };
+    const timer = window.setTimeout(initialize, 0);
 
     const openSettings = () => setSettingsOpen(true);
     window.addEventListener(OPEN_SETTINGS_EVENT, openSettings);
-    return () => window.removeEventListener(OPEN_SETTINGS_EVENT, openSettings);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(OPEN_SETTINGS_EVENT, openSettings);
+    };
   }, []);
 
   const saveChoice = (choice: CookieConsentChoice) => {
@@ -33,6 +40,7 @@ export function CookieConsent() {
     } catch {
       // Wenn lokale Speicherung blockiert ist, gilt die Auswahl nur für diese Sitzung.
     }
+    window.dispatchEvent(new Event(CONSENT_UPDATED_EVENT));
     setAnalytics(choice === "accepted");
     setVisible(false);
     setSettingsOpen(false);

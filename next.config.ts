@@ -21,6 +21,12 @@ const nextConfig: NextConfig = {
         destination: "https://www.joschaschmidt.com/:path*",
         permanent: true,
       },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "joschaschmidt.com" }],
+        destination: "https://www.joschaschmidt.com/:path*",
+        permanent: true,
+      },
     ];
   },
   async headers() {

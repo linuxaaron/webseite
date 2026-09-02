@@ -7,6 +7,10 @@ const DEFAULT_DOI_TEMPLATE_ID = 6;
 const MAX_BODY_BYTES = 8 * 1024;
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 const RATE_LIMIT = 5;
+const ALLOWED_ORIGINS = new Set([
+  "https://www.joschaschmidt.com",
+  "https://joschaschmidt.com",
+]);
 
 const requestLog = new Map<string, number[]>();
 
@@ -36,6 +40,21 @@ function isRateLimited(key: string) {
 }
 
 export async function POST(request: Request) {
+  const origin = request.headers.get("origin");
+  if (!origin || !ALLOWED_ORIGINS.has(origin)) {
+    return NextResponse.json(
+      { ok: false, message: "Ungültige Anfrageherkunft." },
+      { status: 403, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
+  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
+    return NextResponse.json(
+      { ok: false, message: "Ungültiges Anfrageformat." },
+      { status: 415, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   const contentLength = Number(request.headers.get("content-length") || 0);
   if (contentLength > MAX_BODY_BYTES) {
     return NextResponse.json({ ok: false, message: "Die Anfrage ist zu groß." }, { status: 413 });
@@ -100,7 +119,7 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           email,
           includeListIds: [listId],
-          redirectionUrl: "https://joschaschmidt.com/",
+          redirectionUrl: "https://www.joschaschmidt.com/",
           templateId,
         }),
         cache: "no-store",
