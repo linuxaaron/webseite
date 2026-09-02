@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/favicon.ico",
-      "destination": "/favicon.svg"
+      "destination": "/sunflower-logo.png"
     }
   ]
 }

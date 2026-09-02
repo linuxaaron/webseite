@@ -13,7 +13,7 @@ const plexMono = IBM_Plex_Mono({ subsets: ["latin"], display: "swap", variable: 
 const siteUrl = "https://www.joschaschmidt.com";
 const siteName = "Joscha Schmidt | Cybersecurity, Webentwicklung & IT Security";
 const siteDescription = "Cybersecurity, Web Security und Webentwicklung von Joscha Schmidt: technische Sicherheitsanalysen, Security Audits, OSINT, Linux und professionelle Webanwendungen.";
-const favicon = "/icon.svg?v=3";
+const favicon = "/sunflower-logo.png?v=4";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   creator: "Joscha Schmidt",
   publisher: "Joscha Schmidt",
   keywords: ["Cybersecurity", "Cyber Security", "IT Security", "Web Security", "Security Audit", "Sicherheitsanalyse", "OSINT", "Linux Security", "Webentwicklung", "Webanwendungen", "Webdesign", "Full Stack Development", "Joscha Schmidt", "Linux Aaron"],
-  icons: { icon: [{ url: favicon, type: "image/svg+xml", sizes: "any" }], shortcut: [{ url: favicon, type: "image/svg+xml" }], apple: [{ url: favicon, type: "image/svg+xml", sizes: "180x180" }] },
+  icons: { icon: [{ url: favicon, type: "image/png", sizes: "512x512" }], shortcut: [{ url: favicon, type: "image/png" }], apple: [{ url: "/apple-icon.png?v=4", type: "image/png", sizes: "180x180" }] },
   manifest: "/manifest.webmanifest",
   alternates: { canonical: "/" },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
