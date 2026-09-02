@@ -13,12 +13,6 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
-  // Next 16.3.2 fails to parse this project's otherwise valid `tsc --showConfig`
-  // output when its experimental CLI checker is enabled. The TypeScript API path
-  // performs the same build type checks without that faulty subprocess parsing.
-  experimental: {
-    useTypeScriptCli: false,
-  },
   async redirects() {
     return [
       {
