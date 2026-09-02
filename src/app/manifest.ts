@@ -11,9 +11,9 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#0b0f14",
     icons: [
       {
-        src: "/sunflower-logo.png?v=4",
-        sizes: "512x512",
-        type: "image/png",
+        src: "/icon.svg?v=3",
+        sizes: "any",
+        type: "image/svg+xml",
         purpose: "any",
       },
     ],
